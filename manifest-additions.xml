@@ -1,0 +1,10 @@
+<!-- Add inside <manifest> (above <application>) in AndroidManifest.xml -->
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+<uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
+<!-- Add inside <application> (MainActivity is already declared by the wizard) -->
+<activity android:name=".ui.DeadlinesActivity" android:exported="false" />
+<activity android:name=".ui.AddDeadlineActivity" android:exported="false" />
