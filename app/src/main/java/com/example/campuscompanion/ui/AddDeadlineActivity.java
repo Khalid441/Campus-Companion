@@ -2,6 +2,7 @@ package com.example.campuscompanion.ui;
 
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.content.Context;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
 import android.widget.Toast;
@@ -11,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.campuscompanion.data.local.AppDatabase;
 import com.example.campuscompanion.data.local.Deadline;
 import com.example.campuscompanion.databinding.ActivityAddDeadlineBinding;
+import com.example.campuscompanion.reminder.ReminderScheduler;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -83,9 +85,12 @@ public class AddDeadlineActivity extends AppCompatActivity {
         d.dueAt = cal.getTimeInMillis();
         d.remindBeforeMinutes = REMIND_MINUTES[b.spRemind.getSelectedItemPosition()];
 
+        Context app = getApplicationContext();
         AppDatabase.executor.execute(() -> {
-            AppDatabase.get(getApplicationContext()).deadlineDao().insert(d);
-            // Step 4 (reminders): schedule the alarm here using the inserted id.
+            long newId = AppDatabase.get(app).deadlineDao().insert(d);
+            d.id = (int) newId;
+            ReminderScheduler.schedule(app, d); // alarm uses the new id as its request code
+
             runOnUiThread(() -> {
                 Toast.makeText(this, "Deadline saved", Toast.LENGTH_SHORT).show();
                 finish();
