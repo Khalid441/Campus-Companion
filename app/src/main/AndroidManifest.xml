@@ -8,8 +8,10 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
-
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <application
+        android:name=".CampusApp"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -20,8 +22,9 @@
         android:theme="@style/Theme.CampusCompanion"
         tools:targetApi="34">
 
+        <!-- Launcher: login first; it forwards to MainActivity when already signed in -->
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.LoginActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -29,20 +32,15 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name=".ui.DeadlinesActivity"
-            android:exported="false" />
+        <activity android:name=".ui.RegisterActivity" android:exported="false" />
+        <activity android:name=".MainActivity" android:exported="false" />
+        <activity android:name=".ui.DeadlinesActivity" android:exported="false" />
+        <activity android:name=".ui.AddDeadlineActivity" android:exported="false" />
+        <activity android:name=".ui.RoutineActivity" android:exported="false" />
+        <activity android:name=".ui.AddRoutineActivity" android:exported="false" />
 
-        <activity
-            android:name=".ui.AddDeadlineActivity"
-            android:exported="false" />
+        <receiver android:name=".receiver.ReminderReceiver" android:exported="false" />
 
-        <!-- Fires at reminder time -->
-        <receiver
-            android:name=".receiver.ReminderReceiver"
-            android:exported="false" />
-
-        <!-- Re-schedules alarms after the phone restarts -->
         <receiver
             android:name=".receiver.BootReceiver"
             android:exported="true">
@@ -51,7 +49,6 @@
             </intent-filter>
         </receiver>
 
-        <!-- Foreground service: persistent "next deadline" notification -->
         <service
             android:name=".service.NextDeadlineService"
             android:exported="false"
@@ -61,7 +58,6 @@
                 android:value="next_deadline_tracker" />
         </service>
 
-        <!-- Content provider exposing deadlines (private to this app) -->
         <provider
             android:name=".provider.DeadlineProvider"
             android:authorities="com.example.campuscompanion.provider"

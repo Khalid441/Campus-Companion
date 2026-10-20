@@ -29,11 +29,19 @@ public interface DeadlineDao {
     @Query("SELECT * FROM deadlines WHERE id = :id")
     Deadline getById(int id);
 
-    // Used by BootReceiver to re-schedule alarms (plain list, background thread only)
     @Query("SELECT * FROM deadlines WHERE done = 0")
     List<Deadline> getPending();
 
-    // Used by the foreground service: the next not-finished deadline
     @Query("SELECT * FROM deadlines WHERE done = 0 ORDER BY dueAt ASC LIMIT 1")
     LiveData<Deadline> getNextPending();
+
+    // ---- Firebase sync helpers (background thread only) ----
+    @Query("SELECT * FROM deadlines WHERE remoteId = :remoteId LIMIT 1")
+    Deadline getByRemoteId(String remoteId);
+
+    @Query("SELECT * FROM deadlines WHERE isShared = 1")
+    List<Deadline> getShared();
+
+    @Query("DELETE FROM deadlines WHERE isShared = 1")
+    void deleteShared();
 }
