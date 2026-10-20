@@ -2,6 +2,7 @@ package com.example.campuscompanion.adapter;
 
 import android.graphics.Paint;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
@@ -41,7 +42,8 @@ public class DeadlineAdapter extends ListAdapter<Deadline, DeadlineAdapter.VH> {
                     && Objects.equals(a.course, b.course)
                     && Objects.equals(a.priority, b.priority)
                     && a.dueAt == b.dueAt
-                    && a.done == b.done;
+                    && a.done == b.done
+                    && a.isShared == b.isShared;
         }
     };
 
@@ -77,6 +79,7 @@ public class DeadlineAdapter extends ListAdapter<Deadline, DeadlineAdapter.VH> {
             b.title.setText(d.title);
             b.course.setText(d.course == null || d.course.isEmpty() ? "No course" : d.course);
             b.due.setText(FMT.format(new Date(d.dueAt)));
+            b.sharedTag.setVisibility(d.isShared ? View.VISIBLE : View.GONE);
 
             int colorRes;
             if (Deadline.HIGH.equals(d.priority)) colorRes = R.color.priority_high;
@@ -95,7 +98,6 @@ public class DeadlineAdapter extends ListAdapter<Deadline, DeadlineAdapter.VH> {
                 b.title.setPaintFlags(b.title.getPaintFlags() & ~Paint.STRIKE_THRU_TEXT_FLAG);
             }
 
-            // Detach before setChecked so recycling doesn't fire the listener.
             b.checkDone.setOnCheckedChangeListener(null);
             b.checkDone.setChecked(d.done);
             b.checkDone.setOnCheckedChangeListener((btn, checked) -> listener.onToggleDone(d, checked));

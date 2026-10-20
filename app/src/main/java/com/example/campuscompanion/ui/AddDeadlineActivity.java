@@ -4,21 +4,35 @@ import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.Context;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.campuscompanion.auth.UserSession;
 import com.example.campuscompanion.data.local.AppDatabase;
 import com.example.campuscompanion.data.local.Deadline;
 import com.example.campuscompanion.databinding.ActivityAddDeadlineBinding;
 import com.example.campuscompanion.reminder.ReminderScheduler;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
+/**
+ * One form, two uses:
+ *  - normal: saves a personal deadline in Room and schedules its reminder
+ *  - EXTRA_POST_TO_SECTION (class representative): posts it to Firestore for the whole section
+ */
 public class AddDeadlineActivity extends AppCompatActivity {
+
+    public static final String EXTRA_POST_TO_SECTION = "post_to_section";
 
     private static final String[] PRIORITY_LABELS = {"High", "Medium", "Low"};
     private static final String[] PRIORITY_VALUES = {Deadline.HIGH, Deadline.MEDIUM, Deadline.LOW};
@@ -30,6 +44,7 @@ public class AddDeadlineActivity extends AppCompatActivity {
     private final Calendar cal = Calendar.getInstance();
 
     private ActivityAddDeadlineBinding b;
+    private boolean toSection;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,7 +52,14 @@ public class AddDeadlineActivity extends AppCompatActivity {
         b = ActivityAddDeadlineBinding.inflate(getLayoutInflater());
         setContentView(b.getRoot());
 
-        // Default: tomorrow, same time
+        toSection = getIntent().getBooleanExtra(EXTRA_POST_TO_SECTION, false) && UserSession.isCr(this);
+        if (toSection) {
+            b.tvHeading.setText("Post to section");
+            b.tvRemindLabel.setVisibility(View.GONE);   // each student gets their own default reminder
+            b.spRemind.setVisibility(View.GONE);
+            b.btnSave.setText("Post to section");
+        }
+
         cal.add(Calendar.DAY_OF_MONTH, 1);
         cal.set(Calendar.SECOND, 0);
         cal.set(Calendar.MILLISECOND, 0);
@@ -77,24 +99,64 @@ public class AddDeadlineActivity extends AppCompatActivity {
         }
         b.tilTitle.setError(null);
 
+        String course = b.etCourse.getText() == null ? "" : b.etCourse.getText().toString().trim();
+        String note = b.etNote.getText() == null ? "" : b.etNote.getText().toString().trim();
+        String priority = PRIORITY_VALUES[b.spPriority.getSelectedItemPosition()];
+        long dueAt = cal.getTimeInMillis();
+
+        if (toSection) {
+            postToSection(title, course, note, priority, dueAt);
+        } else {
+            savePersonal(title, course, note, priority, dueAt);
+        }
+    }
+
+    private void savePersonal(String title, String course, String note, String priority, long dueAt) {
         Deadline d = new Deadline();
         d.title = title;
-        d.course = b.etCourse.getText() == null ? "" : b.etCourse.getText().toString().trim();
-        d.note = b.etNote.getText() == null ? "" : b.etNote.getText().toString().trim();
-        d.priority = PRIORITY_VALUES[b.spPriority.getSelectedItemPosition()];
-        d.dueAt = cal.getTimeInMillis();
+        d.course = course;
+        d.note = note;
+        d.priority = priority;
+        d.dueAt = dueAt;
         d.remindBeforeMinutes = REMIND_MINUTES[b.spRemind.getSelectedItemPosition()];
 
         Context app = getApplicationContext();
         AppDatabase.executor.execute(() -> {
             long newId = AppDatabase.get(app).deadlineDao().insert(d);
             d.id = (int) newId;
-            ReminderScheduler.schedule(app, d); // alarm uses the new id as its request code
-
+            ReminderScheduler.schedule(app, d);
             runOnUiThread(() -> {
                 Toast.makeText(this, "Deadline saved", Toast.LENGTH_SHORT).show();
                 finish();
             });
         });
+    }
+
+    private void postToSection(String title, String course, String note, String priority, long dueAt) {
+        String section = UserSession.section(this);
+        if (section == null) {
+            Toast.makeText(this, "No section found. Please log in again.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        Map<String, Object> doc = new HashMap<>();
+        doc.put("title", title);
+        doc.put("course", course);
+        doc.put("note", note);
+        doc.put("priority", priority);
+        doc.put("dueAt", dueAt);
+        doc.put("createdBy", FirebaseAuth.getInstance().getUid());
+        doc.put("createdAt", FieldValue.serverTimestamp());
+
+        Context app = getApplicationContext();
+        FirebaseFirestore.getInstance()
+                .collection("sections").document(section).collection("deadlines")
+                .add(doc)
+                .addOnFailureListener(e -> Toast.makeText(app,
+                        "Post failed: " + e.getMessage(), Toast.LENGTH_LONG).show());
+
+        // Firestore queues the write offline, so don't block the screen waiting for the server
+        Toast.makeText(this, "Posting to section...", Toast.LENGTH_SHORT).show();
+        finish();
     }
 }

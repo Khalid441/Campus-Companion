@@ -11,6 +11,7 @@
         android:padding="16dp">
 
         <TextView
+            android:id="@+id/tvHeading"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
@@ -98,6 +99,7 @@
             android:layout_height="48dp" />
 
         <TextView
+            android:id="@+id/tvRemindLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
