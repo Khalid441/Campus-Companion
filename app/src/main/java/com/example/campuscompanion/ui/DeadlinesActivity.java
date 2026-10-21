@@ -14,7 +14,10 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.campuscompanion.adapter.DeadlineAdapter;
 import com.example.campuscompanion.auth.UserSession;
@@ -24,6 +27,7 @@ import com.example.campuscompanion.data.local.DeadlineDao;
 import com.example.campuscompanion.databinding.ActivityDeadlinesBinding;
 import com.example.campuscompanion.reminder.ReminderScheduler;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.io.OutputStream;
@@ -94,6 +98,8 @@ public class DeadlinesActivity extends AppCompatActivity implements DeadlineAdap
         b.fabAdd.setOnClickListener(v ->
                 startActivity(new Intent(this, AddDeadlineActivity.class)));
 
+        setupSwipe();
+
         b.btnExport.setOnClickListener(v -> {
             if (all.isEmpty()) {
                 Toast.makeText(this, "No deadlines to export", Toast.LENGTH_SHORT).show();
@@ -101,6 +107,56 @@ public class DeadlinesActivity extends AppCompatActivity implements DeadlineAdap
                 createCsv.launch("campus_deadlines.csv");
             }
         });
+    }
+
+    /** Swipe right = done / not done, swipe left = delete (both with Undo). */
+    private void setupSwipe() {
+        new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0,
+                ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
+            @Override
+            public boolean onMove(@NonNull RecyclerView rv, @NonNull RecyclerView.ViewHolder vh,
+                                  @NonNull RecyclerView.ViewHolder target) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder vh, int direction) {
+                int pos = vh.getBindingAdapterPosition();
+                if (pos == RecyclerView.NO_POSITION || pos >= adapter.getCurrentList().size()) return;
+                Deadline d = adapter.getCurrentList().get(pos);
+                Context app = getApplicationContext();
+
+                if (direction == ItemTouchHelper.RIGHT) {
+                    boolean newDone = !d.done;
+                    onToggleDone(d, newDone);
+                    adapter.notifyItemChanged(pos);   // snap the card back; the list refreshes from Room
+                    Snackbar.make(b.getRoot(), newDone ? "Marked as done" : "Marked as pending",
+                                    Snackbar.LENGTH_LONG)
+                            .setAnchorView(b.fabAdd)
+                            .setAction("Undo", v -> onToggleDone(d, !newDone))
+                            .show();
+                } else {
+                    if (d.isShared) {
+                        adapter.notifyItemChanged(pos);
+                        Toast.makeText(DeadlinesActivity.this,
+                                "Shared deadlines can only be removed by your CR (long-press)",
+                                Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                    AppDatabase.executor.execute(() -> {
+                        dao.delete(d);
+                        ReminderScheduler.cancel(app, d.id);
+                    });
+                    Snackbar.make(b.getRoot(), "Deleted \"" + d.title + "\"", Snackbar.LENGTH_LONG)
+                            .setAnchorView(b.fabAdd)
+                            .setAction("Undo", v -> AppDatabase.executor.execute(() -> {
+                                dao.insert(d);                       // same id comes back
+                                ReminderScheduler.schedule(app, d);
+                            }))
+                            .show();
+                }
+            }
+        }).attachToRecyclerView(b.recycler);
     }
 
     @Override
