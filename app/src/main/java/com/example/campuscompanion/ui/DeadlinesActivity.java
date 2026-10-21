@@ -26,6 +26,7 @@ import com.example.campuscompanion.data.local.Deadline;
 import com.example.campuscompanion.data.local.DeadlineDao;
 import com.example.campuscompanion.databinding.ActivityDeadlinesBinding;
 import com.example.campuscompanion.reminder.ReminderScheduler;
+import com.example.campuscompanion.widget.NextDeadlineWidget;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -169,6 +170,7 @@ public class DeadlinesActivity extends AppCompatActivity implements DeadlineAdap
     protected void onPause() {
         super.onPause();
         ticker.removeCallbacks(tick);
+        NextDeadlineWidget.refresh(this);   // keep the home screen widget up to date
     }
 
     private static boolean writeCsv(Context app, Uri uri, List<Deadline> list) {
