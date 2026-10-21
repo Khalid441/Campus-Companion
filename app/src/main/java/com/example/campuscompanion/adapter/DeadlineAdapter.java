@@ -80,6 +80,7 @@ public class DeadlineAdapter extends ListAdapter<Deadline, DeadlineAdapter.VH> {
             b.course.setText(d.course == null || d.course.isEmpty() ? "No course" : d.course);
             b.due.setText(FMT.format(new Date(d.dueAt)));
             b.sharedTag.setVisibility(d.isShared ? View.VISIBLE : View.GONE);
+            b.countdown.setDeadline(d.dueAt, d.done);
 
             int colorRes;
             if (Deadline.HIGH.equals(d.priority)) colorRes = R.color.priority_high;

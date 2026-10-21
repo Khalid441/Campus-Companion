@@ -38,6 +38,7 @@ import com.example.campuscompanion.ui.AddDeadlineActivity;
 import com.example.campuscompanion.ui.DeadlinesActivity;
 import com.example.campuscompanion.ui.LoginActivity;
 import com.example.campuscompanion.ui.RoutineActivity;
+import com.example.campuscompanion.ui.TimetableActivity;
 import com.example.campuscompanion.util.TimeUtil;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -145,7 +146,7 @@ public class MainActivity extends AppCompatActivity {
                         Uri.parse("package:" + getPackageName())));
             }
         });
-
+        b.btnTimetable.setOnClickListener(v -> startActivity(new Intent(this, TimetableActivity.class)));
         b.btnLogout.setOnClickListener(v -> logout());
         b.tvWeather.setOnClickListener(v -> {
             if (hasLocationPermission()) loadWeather(); else loadWeatherDefaultCity();
