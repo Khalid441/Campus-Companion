@@ -17,7 +17,7 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.view.View;
 import android.widget.CompoundButton;
-import com.example.campuscompanion.model.Notice;
+
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
@@ -29,6 +29,7 @@ import com.example.campuscompanion.data.local.AppDatabase;
 import com.example.campuscompanion.data.remote.WeatherClient;
 import com.example.campuscompanion.data.remote.WeatherResponse;
 import com.example.campuscompanion.databinding.ActivityMainBinding;
+import com.example.campuscompanion.model.Notice;
 import com.example.campuscompanion.notification.NotificationHelper;
 import com.example.campuscompanion.provider.DeadlineProvider;
 import com.example.campuscompanion.reminder.ReminderScheduler;
@@ -40,8 +41,10 @@ import com.example.campuscompanion.ui.DeadlinesActivity;
 import com.example.campuscompanion.ui.LoginActivity;
 import com.example.campuscompanion.ui.NoticesActivity;
 import com.example.campuscompanion.ui.RoutineActivity;
+import com.example.campuscompanion.ui.StatsActivity;
 import com.example.campuscompanion.ui.TimetableActivity;
 import com.example.campuscompanion.util.TimeUtil;
+import com.example.campuscompanion.widget.NextDeadlineWidget;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
@@ -134,7 +137,7 @@ public class MainActivity extends AppCompatActivity {
         SyncManager.start(this, UserSession.section(this));
         SyncManager.schedulePeriodic(this);
 
-        // NEW: real-time notices from the class representative
+        // Real-time notices from the class representative
         NoticeManager.start(this, UserSession.section(this));
         NoticeManager.latest.observe(this, this::renderNotice);
         b.cardNotice.setOnClickListener(v -> startActivity(new Intent(this, NoticesActivity.class)));
@@ -154,10 +157,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         b.btnTimetable.setOnClickListener(v -> startActivity(new Intent(this, TimetableActivity.class)));
+        b.btnStats.setOnClickListener(v -> startActivity(new Intent(this, StatsActivity.class)));
         b.btnLogout.setOnClickListener(v -> logout());
         b.tvWeather.setOnClickListener(v -> {
             if (hasLocationPermission()) loadWeather(); else loadWeatherDefaultCity();
         });
+
+        // Re-arm this account's reminders (alarms are cancelled on logout)
         Context appCtx = getApplicationContext();
         AppDatabase.executor.execute(() -> {
             for (com.example.campuscompanion.data.local.Deadline d
@@ -172,7 +178,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         if (b == null) return;
+
         renderNotice(NoticeManager.latest.getValue());
+        NextDeadlineWidget.refresh(this);
+
         b.swTracker.setOnCheckedChangeListener(null);
         b.swTracker.setChecked(prefs.getBoolean(NextDeadlineService.KEY_TRACKER_ON, false));
         b.swTracker.setOnCheckedChangeListener(trackerListener);
@@ -195,6 +204,11 @@ public class MainActivity extends AppCompatActivity {
             loadWeatherDefaultCity();
         }
     }
+
+    // ---------------------------------------------------------------------
+    // Notices
+    // ---------------------------------------------------------------------
+
     private void renderNotice(Notice n) {
         if (b == null) return;
         if (n == null) {
@@ -205,6 +219,7 @@ public class MainActivity extends AppCompatActivity {
         String who = (n.author == null || n.author.isEmpty()) ? "CR" : n.author;
         b.tvNotice.setText((unread ? "\uD83D\uDD34 " : "") + n.message + "\n\u2014 " + who);
     }
+
     // ---------------------------------------------------------------------
     // Weather + location
     // ---------------------------------------------------------------------
@@ -247,7 +262,7 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
-    /** Fallback: your original fixed-city weather. */
+    /** Fallback: fixed default city. */
     private void loadWeatherDefaultCity() {
         if (b == null) return;
         fetchWeather(WeatherClient.fetchCurrent(), WeatherClient.CITY);
@@ -326,6 +341,19 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private String weatherEmoji(int code, boolean day) {
+        if (code == 0 || code == 1) return day ? "\u2600\uFE0F" : "\uD83C\uDF19";   // sun / moon
+        if (code <= 3) return day ? "\u26C5" : "\u2601\uFE0F";                      // partly cloudy / cloud
+        if (code <= 48) return "\uD83C\uDF2B\uFE0F";                                // fog
+        if (code <= 67) return "\uD83C\uDF27\uFE0F";                                // rain
+        if (code <= 77) return "\u2744\uFE0F";                                      // snow
+        if (code <= 82) return "\uD83C\uDF26\uFE0F";                                // rain showers
+        if (code <= 86) return "\u2744\uFE0F";                                      // snow showers
+        return "\u26C8\uFE0F";                                                      // thunderstorm
+    }
+
+    // ---------------------------------------------------------------------
+    // Today's classes, provider demo, logout
     // ---------------------------------------------------------------------
 
     private void showTodaysClasses() {
@@ -374,8 +402,10 @@ public class MainActivity extends AppCompatActivity {
 
         stopService(new Intent(this, NextDeadlineService.class));
         prefs.edit().putBoolean(NextDeadlineService.KEY_TRACKER_ON, false).apply();
-        SyncManager.stop(this);      NoticeManager.stop();
+        SyncManager.stop(this);
+        NoticeManager.stop();
         FirebaseAuth.getInstance().signOut();
+        NextDeadlineWidget.refresh(this);   // widget switches to "Sign in..."
         UserSession.clear(this);
         goToLogin();
     }
@@ -385,15 +415,5 @@ public class MainActivity extends AppCompatActivity {
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(i);
         finish();
-    }
-    private String weatherEmoji(int code, boolean day) {
-        if (code == 0 || code == 1) return day ? "\u2600\uFE0F" : "\uD83C\uDF19";   // sun / moon
-        if (code <= 3) return day ? "\u26C5" : "\u2601\uFE0F";                      // partly cloudy / cloud
-        if (code <= 48) return "\uD83C\uDF2B\uFE0F";                                // fog
-        if (code <= 67) return "\uD83C\uDF27\uFE0F";                                // rain
-        if (code <= 77) return "\u2744\uFE0F";                                      // snow
-        if (code <= 82) return "\uD83C\uDF26\uFE0F";   // rain showers
-        if (code <= 86) return "\u2744\uFE0F";         // snow showers
-        return "\u26C8\uFE0F";                         // thunderstorm                                                     // thunderstorm
     }
 }
