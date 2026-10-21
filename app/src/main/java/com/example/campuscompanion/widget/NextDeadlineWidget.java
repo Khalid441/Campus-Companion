@@ -22,7 +22,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-/** Home screen widget: next deadline, time left, overdue count and the next class today. */
+/** Home screen widget: next deadline, time left, overdue count, and today's classes. */
 public class NextDeadlineWidget extends AppWidgetProvider {
 
     private static final long HOUR = 60L * 60 * 1000;
@@ -92,7 +92,7 @@ public class NextDeadlineWidget extends AppWidgetProvider {
             v.setTextViewText(R.id.wDue, line);
         }
 
-        v.setTextViewText(R.id.wClass, nextClassToday(c));
+        v.setTextViewText(R.id.wClass, classesToday(c));
         return v;
     }
 
@@ -102,19 +102,34 @@ public class NextDeadlineWidget extends AppWidgetProvider {
         return Math.max(1, ms / 60_000L) + "m";
     }
 
-    private static String nextClassToday(Context c) {
+    /** The class running now (if any) and the next one today. */
+    private static String classesToday(Context c) {
         Calendar cal = Calendar.getInstance();
         int day = cal.get(Calendar.DAY_OF_WEEK);
         int nowMin = cal.get(Calendar.HOUR_OF_DAY) * 60 + cal.get(Calendar.MINUTE);
 
+        String running = null;
+        String upcoming = null;
+
         try (Cursor cur = AppDatabase.get(c).getOpenHelper().getReadableDatabase().query(
-                "SELECT course, startMinutes FROM routine WHERE dayOfWeek = ? AND startMinutes >= ? "
-                        + "ORDER BY startMinutes ASC LIMIT 1",
+                "SELECT course, startMinutes, endMinutes FROM routine "
+                        + "WHERE dayOfWeek = ? AND endMinutes > ? ORDER BY startMinutes ASC",
                 new Object[]{day, nowMin})) {
-            if (cur.moveToFirst()) {
-                return "Next class: " + cur.getString(0) + " at " + TimeUtil.fmt(cur.getInt(1));
+            while (cur.moveToNext()) {
+                String course = cur.getString(0);
+                int start = cur.getInt(1);
+                int end = cur.getInt(2);
+                if (start <= nowMin) {
+                    if (running == null) running = "Now: " + course + " until " + TimeUtil.fmt(end);
+                } else if (upcoming == null) {
+                    upcoming = course + " at " + TimeUtil.fmt(start);
+                }
             }
         } catch (Exception ignored) { }
+
+        if (running != null && upcoming != null) return running + "\nNext: " + upcoming;
+        if (running != null) return running;
+        if (upcoming != null) return "Next class: " + upcoming;
         return "No more classes today";
     }
 }
