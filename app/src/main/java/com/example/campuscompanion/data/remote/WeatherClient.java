@@ -14,7 +14,7 @@ public class WeatherClient {
     private static final double DEFAULT_LAT = 25.0189;
     private static final double DEFAULT_LON = 90.0175;
 
-    private static final String FIELDS = "temperature_2m,wind_speed_10m,weather_code";
+    private static final String FIELDS = "temperature_2m,wind_speed_10m,weather_code,is_day";
     private static final String TIMEZONE = "auto";
 
     private static WeatherApi api;
