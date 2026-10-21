@@ -231,25 +231,31 @@ public class MainActivity extends AppCompatActivity {
 
     /** Lab 11: HTTP request + JSON parsing with Retrofit and Gson. */
     private void fetchWeather(Call<WeatherResponse> call, String label) {
-        // Only the newest request may update the card (avoids old/late results overwriting it)
+        // Only the newest request may update the card
         if (currentCall != null) currentCall.cancel();
         currentCall = call;
         b.tvWeather.setText("Weather in " + label + ": loading...");
+
         call.enqueue(new Callback<WeatherResponse>() {
             @Override
             public void onResponse(Call<WeatherResponse> call, Response<WeatherResponse> response) {
                 if (call.isCanceled() || isFinishing() || isDestroyed()) return;
                 WeatherResponse body = response.body();
                 if (response.isSuccessful() && body != null && body.current != null) {
+                    boolean day = body.current.isDay == 1;
+
+                    String desc = WeatherResponse.describe(body.current.weatherCode);
+                    if (!day && body.current.weatherCode == 0) desc = "Clear night";
+
                     b.tvWeather.setText(String.format(Locale.getDefault(),
                             "%s  %s\n%.0f\u00B0C, %s\nWind %.0f km/h",
-                            weatherEmoji(body.current.weatherCode), label,
+                            weatherEmoji(body.current.weatherCode, day), label,
                             body.current.temperature,
-                            WeatherResponse.describe(body.current.weatherCode),
+                            desc,
                             body.current.windSpeed));
                 } else {
                     android.util.Log.e("WEATHER", "HTTP " + response.code() + " " + call.request().url());
-                    b.tvWeather.setText("Weather unavailable (HTTP " + response.code() + ")");
+                    b.tvWeather.setText("Weather unavailable right now");
                 }
             }
 
@@ -347,13 +353,14 @@ public class MainActivity extends AppCompatActivity {
         startActivity(i);
         finish();
     }
-    private String weatherEmoji(int code) {
-        if (code == 0) return "\u2600\uFE0F";            // clear
-        if (code <= 3) return "\u26C5";                  // cloudy
-        if (code <= 48) return "\uD83C\uDF2B\uFE0F";     // fog
-        if (code <= 67) return "\uD83C\uDF27\uFE0F";     // rain
-        if (code <= 77) return "\u2744\uFE0F";           // snow
-        if (code <= 82) return "\uD83C\uDF26\uFE0F";     // showers
-        return "\u26C8\uFE0F";                           // thunderstorm
+    private String weatherEmoji(int code, boolean day) {
+        if (code == 0 || code == 1) return day ? "\u2600\uFE0F" : "\uD83C\uDF19";   // sun / moon
+        if (code <= 3) return day ? "\u26C5" : "\u2601\uFE0F";                      // partly cloudy / cloud
+        if (code <= 48) return "\uD83C\uDF2B\uFE0F";                                // fog
+        if (code <= 67) return "\uD83C\uDF27\uFE0F";                                // rain
+        if (code <= 77) return "\u2744\uFE0F";                                      // snow
+        if (code <= 82) return "\uD83C\uDF26\uFE0F";   // rain showers
+        if (code <= 86) return "\u2744\uFE0F";         // snow showers
+        return "\u26C8\uFE0F";                         // thunderstorm                                                     // thunderstorm
     }
 }
