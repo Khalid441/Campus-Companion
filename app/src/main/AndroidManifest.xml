@@ -39,6 +39,7 @@
         <activity android:name=".ui.RoutineActivity" android:exported="false" />
         <activity android:name=".ui.AddRoutineActivity" android:exported="false" />
         <activity android:name=".ui.TimetableActivity" android:exported="false" />
+        <activity android:name=".ui.NoticesActivity" android:exported="false" />
         <receiver android:name=".receiver.ReminderReceiver" android:exported="false" />
 
         <receiver
