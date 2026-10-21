@@ -16,6 +16,8 @@ public class WeatherResponse {
 
         @SerializedName("weather_code")
         public int weatherCode;
+        @SerializedName("is_day")
+        public int isDay;
     }
 
     /** Converts an Open-Meteo weather code into readable text. */
