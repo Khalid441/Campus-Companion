@@ -57,6 +57,14 @@
                 android:visibility="gone" />
         </LinearLayout>
 
+        <!-- Custom view: shrinking ring + time left -->
+        <com.example.campuscompanion.view.DeadlineCountdownView
+            android:id="@+id/countdown"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginEnd="2dp" />
+
         <CheckBox
             android:id="@+id/checkDone"
             android:layout_width="wrap_content"
