@@ -17,7 +17,7 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.view.View;
 import android.widget.CompoundButton;
-
+import com.example.campuscompanion.model.Notice;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
@@ -33,10 +33,12 @@ import com.example.campuscompanion.notification.NotificationHelper;
 import com.example.campuscompanion.provider.DeadlineProvider;
 import com.example.campuscompanion.reminder.ReminderScheduler;
 import com.example.campuscompanion.service.NextDeadlineService;
+import com.example.campuscompanion.sync.NoticeManager;
 import com.example.campuscompanion.sync.SyncManager;
 import com.example.campuscompanion.ui.AddDeadlineActivity;
 import com.example.campuscompanion.ui.DeadlinesActivity;
 import com.example.campuscompanion.ui.LoginActivity;
+import com.example.campuscompanion.ui.NoticesActivity;
 import com.example.campuscompanion.ui.RoutineActivity;
 import com.example.campuscompanion.ui.TimetableActivity;
 import com.example.campuscompanion.util.TimeUtil;
@@ -132,6 +134,11 @@ public class MainActivity extends AppCompatActivity {
         SyncManager.start(this, UserSession.section(this));
         SyncManager.schedulePeriodic(this);
 
+        // NEW: real-time notices from the class representative
+        NoticeManager.start(this, UserSession.section(this));
+        NoticeManager.latest.observe(this, this::renderNotice);
+        b.cardNotice.setOnClickListener(v -> startActivity(new Intent(this, NoticesActivity.class)));
+
         b.btnDeadlines.setOnClickListener(v -> startActivity(new Intent(this, DeadlinesActivity.class)));
         b.btnRoutine.setOnClickListener(v -> startActivity(new Intent(this, RoutineActivity.class)));
 
@@ -165,7 +172,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         if (b == null) return;
-
+        renderNotice(NoticeManager.latest.getValue());
         b.swTracker.setOnCheckedChangeListener(null);
         b.swTracker.setChecked(prefs.getBoolean(NextDeadlineService.KEY_TRACKER_ON, false));
         b.swTracker.setOnCheckedChangeListener(trackerListener);
@@ -188,7 +195,16 @@ public class MainActivity extends AppCompatActivity {
             loadWeatherDefaultCity();
         }
     }
-
+    private void renderNotice(Notice n) {
+        if (b == null) return;
+        if (n == null) {
+            b.tvNotice.setText("No notices yet");
+            return;
+        }
+        boolean unread = n.createdAt > NoticeManager.lastSeen(this);
+        String who = (n.author == null || n.author.isEmpty()) ? "CR" : n.author;
+        b.tvNotice.setText((unread ? "\uD83D\uDD34 " : "") + n.message + "\n\u2014 " + who);
+    }
     // ---------------------------------------------------------------------
     // Weather + location
     // ---------------------------------------------------------------------
@@ -358,7 +374,7 @@ public class MainActivity extends AppCompatActivity {
 
         stopService(new Intent(this, NextDeadlineService.class));
         prefs.edit().putBoolean(NextDeadlineService.KEY_TRACKER_ON, false).apply();
-        SyncManager.stop(this);
+        SyncManager.stop(this);      NoticeManager.stop();
         FirebaseAuth.getInstance().signOut();
         UserSession.clear(this);
         goToLogin();
