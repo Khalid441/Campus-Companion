@@ -150,6 +150,13 @@ public class MainActivity extends AppCompatActivity {
         b.tvWeather.setOnClickListener(v -> {
             if (hasLocationPermission()) loadWeather(); else loadWeatherDefaultCity();
         });
+        Context appCtx = getApplicationContext();
+        AppDatabase.executor.execute(() -> {
+            for (com.example.campuscompanion.data.local.Deadline d
+                    : AppDatabase.get(appCtx).deadlineDao().getPending()) {
+                ReminderScheduler.schedule(appCtx, d);
+            }
+        });
         showTodaysClasses();
     }
 
@@ -339,6 +346,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void logout() {
+        // Cancel this account's reminders before switching (must run before SyncManager.stop)
+        Context app = getApplicationContext();
+        AppDatabase.executor.execute(() -> {
+            for (com.example.campuscompanion.data.local.Deadline d
+                    : AppDatabase.get(app).deadlineDao().getPending()) {
+                ReminderScheduler.cancel(app, d.id);
+            }
+        });
+
         stopService(new Intent(this, NextDeadlineService.class));
         prefs.edit().putBoolean(NextDeadlineService.KEY_TRACKER_ON, false).apply();
         SyncManager.stop(this);
