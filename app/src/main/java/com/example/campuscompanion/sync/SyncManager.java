@@ -92,6 +92,9 @@ public final class SyncManager {
             DeadlineDao dao = AppDatabase.get(app).deadlineDao();
             Set<String> keep = new HashSet<>();
 
+            // Shared deadlines this account has not seen before (for the notification)
+            List<DocumentSnapshot> fresh = DeadlineAlerts.findNew(app, docs);
+
             for (DocumentSnapshot doc : docs) {
                 String remoteId = doc.getId();
                 String title = doc.getString("title");
@@ -126,6 +129,8 @@ public final class SyncManager {
                     dao.delete(old);
                 }
             }
+
+            DeadlineAlerts.announce(app, fresh);
         }
     }
 
