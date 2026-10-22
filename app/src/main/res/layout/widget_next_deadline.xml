@@ -7,23 +7,14 @@
     android:gravity="center_vertical"
     android:orientation="vertical"
     android:paddingHorizontal="16dp"
-    android:paddingVertical="10dp">
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="NEXT DEADLINE"
-        android:textColor="#FFC857"
-        android:textSize="11sp"
-        android:textStyle="bold" />
+    android:paddingVertical="8dp">
 
     <TextView
         android:id="@+id/wDeadline"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="3dp"
         android:ellipsize="end"
-        android:maxLines="2"
+        android:maxLines="1"
         android:text="Loading..."
         android:textColor="#FFFFFF"
         android:textSize="17sp"
@@ -35,7 +26,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
         android:ellipsize="end"
-        android:maxLines="2"
+        android:maxLines="1"
         android:textColor="#E0D8FF"
         android:textSize="12sp" />
 
@@ -43,7 +34,7 @@
         android:id="@+id/wClass"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
+        android:layout_marginTop="5dp"
         android:ellipsize="end"
         android:maxLines="2"
         android:textColor="#CFC3FF"
