@@ -2,10 +2,12 @@ package com.example.campuscompanion.ui;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.util.Patterns;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.splashscreen.SplashScreen;
 
 import com.example.campuscompanion.MainActivity;
 import com.example.campuscompanion.auth.UserSession;
@@ -20,6 +22,8 @@ public class LoginActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // Must come before super.onCreate(): swaps the splash theme for the normal one
+        SplashScreen splash = SplashScreen.installSplashScreen(this);
         super.onCreate(savedInstanceState);
         auth = FirebaseAuth.getInstance();
 
@@ -28,6 +32,10 @@ public class LoginActivity extends AppCompatActivity {
             goMain();
             return;
         }
+
+        // Logged out: keep the logo on screen for a moment before the login form
+        final long start = SystemClock.uptimeMillis();
+        splash.setKeepOnScreenCondition(() -> SystemClock.uptimeMillis() - start < 600);
 
         b = ActivityLoginBinding.inflate(getLayoutInflater());
         setContentView(b.getRoot());
