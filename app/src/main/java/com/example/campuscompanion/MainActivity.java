@@ -17,7 +17,7 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.view.View;
 import android.widget.CompoundButton;
-
+import com.example.campuscompanion.ui.CalendarActivity;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
@@ -158,6 +158,7 @@ public class MainActivity extends AppCompatActivity {
         });
         b.btnTimetable.setOnClickListener(v -> startActivity(new Intent(this, TimetableActivity.class)));
         b.btnStats.setOnClickListener(v -> startActivity(new Intent(this, StatsActivity.class)));
+        b.btnCalendar.setOnClickListener(v -> startActivity(new Intent(this, CalendarActivity.class)));
         b.btnLogout.setOnClickListener(v -> logout());
         b.tvWeather.setOnClickListener(v -> {
             if (hasLocationPermission()) loadWeather(); else loadWeatherDefaultCity();
