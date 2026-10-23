@@ -17,7 +17,7 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.view.View;
 import android.widget.CompoundButton;
-import com.example.campuscompanion.ui.CalendarActivity;
+
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
@@ -26,6 +26,7 @@ import androidx.core.content.ContextCompat;
 
 import com.example.campuscompanion.auth.UserSession;
 import com.example.campuscompanion.data.local.AppDatabase;
+import com.example.campuscompanion.data.local.StudySession;
 import com.example.campuscompanion.data.remote.WeatherClient;
 import com.example.campuscompanion.data.remote.WeatherResponse;
 import com.example.campuscompanion.databinding.ActivityMainBinding;
@@ -33,15 +34,18 @@ import com.example.campuscompanion.model.Notice;
 import com.example.campuscompanion.notification.NotificationHelper;
 import com.example.campuscompanion.provider.DeadlineProvider;
 import com.example.campuscompanion.reminder.ReminderScheduler;
+import com.example.campuscompanion.reminder.StudyReminderScheduler;
 import com.example.campuscompanion.service.NextDeadlineService;
 import com.example.campuscompanion.sync.NoticeManager;
 import com.example.campuscompanion.sync.SyncManager;
 import com.example.campuscompanion.ui.AddDeadlineActivity;
+import com.example.campuscompanion.ui.CalendarActivity;
 import com.example.campuscompanion.ui.DeadlinesActivity;
 import com.example.campuscompanion.ui.LoginActivity;
 import com.example.campuscompanion.ui.NoticesActivity;
 import com.example.campuscompanion.ui.RoutineActivity;
 import com.example.campuscompanion.ui.StatsActivity;
+import com.example.campuscompanion.ui.StudyActivity;
 import com.example.campuscompanion.ui.TimetableActivity;
 import com.example.campuscompanion.util.TimeUtil;
 import com.example.campuscompanion.widget.NextDeadlineWidget;
@@ -157,6 +161,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         b.btnTimetable.setOnClickListener(v -> startActivity(new Intent(this, TimetableActivity.class)));
+        b.btnStudy.setOnClickListener(v -> startActivity(new Intent(this, StudyActivity.class)));
+        b.cardStudy.setOnClickListener(v -> startActivity(new Intent(this, StudyActivity.class)));
         b.btnStats.setOnClickListener(v -> startActivity(new Intent(this, StatsActivity.class)));
         b.btnCalendar.setOnClickListener(v -> startActivity(new Intent(this, CalendarActivity.class)));
         b.btnLogout.setOnClickListener(v -> logout());
@@ -171,8 +177,13 @@ public class MainActivity extends AppCompatActivity {
                     : AppDatabase.get(appCtx).deadlineDao().getPending()) {
                 ReminderScheduler.schedule(appCtx, d);
             }
+            for (StudySession s : AppDatabase.get(appCtx).studyDao().getAllNow()) {
+                StudyReminderScheduler.schedule(appCtx, s);
+            }
         });
+
         showTodaysClasses();
+        showTodaysStudy();
     }
 
     @Override
@@ -354,7 +365,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // ---------------------------------------------------------------------
-    // Today's classes, provider demo, logout
+    // Today's classes (university) and today's study plan (personal)
     // ---------------------------------------------------------------------
 
     private void showTodaysClasses() {
@@ -371,6 +382,22 @@ public class MainActivity extends AppCompatActivity {
                 if (e.room != null && !e.room.isEmpty()) sb.append("  (").append(e.room).append(")");
             }
             b.tvToday.setText(sb);
+        });
+    }
+
+    private void showTodaysStudy() {
+        AppDatabase.get(this).studyDao().getAll().observe(this, list -> {
+            int dayIndex = Calendar.getInstance().get(Calendar.DAY_OF_WEEK) - 1;   // 0 = Sunday
+            StringBuilder sb = new StringBuilder();
+            for (StudySession s : list) {
+                if (!s.enabled || (s.daysMask & (1 << dayIndex)) == 0) continue;
+                if (sb.length() > 0) sb.append("\n");
+                sb.append(TimeUtil.fmt(s.startMinutes)).append(" \u2013 ")
+                        .append(TimeUtil.fmt(s.endMinutes)).append("  ").append(s.subject);
+            }
+            b.tvStudyToday.setText(sb.length() == 0
+                    ? "Nothing planned. Tap to add a study session."
+                    : sb.toString());
         });
     }
 
@@ -398,6 +425,9 @@ public class MainActivity extends AppCompatActivity {
             for (com.example.campuscompanion.data.local.Deadline d
                     : AppDatabase.get(app).deadlineDao().getPending()) {
                 ReminderScheduler.cancel(app, d.id);
+            }
+            for (StudySession s : AppDatabase.get(app).studyDao().getAllNow()) {
+                StudyReminderScheduler.cancel(app, s.id);
             }
         });
 

@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">Campus Companion</string>
+    <string name="facebook_app_id">1186631174028826</string>
+    <string name="facebook_client_token">70815f963f970cd8f72ca446c3a91bb1</string>
+    <string name="fb_login_protocol_scheme">fb1186631174028826</string>
 </resources>

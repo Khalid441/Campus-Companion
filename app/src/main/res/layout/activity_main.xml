@@ -16,9 +16,9 @@
             android:id="@+id/tvGreeting"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="?attr/colorOnSurface"
             android:textSize="26sp"
-            android:textStyle="bold"
-            android:textColor="?attr/colorOnSurface" />
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/tvSection"
@@ -45,11 +45,13 @@
                 android:id="@+id/tvWeather"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:lineSpacingExtra="4dp"
                 android:padding="20dp"
                 android:textColor="?attr/colorOnPrimaryContainer"
-                android:textSize="20sp"
-                android:lineSpacingExtra="4dp" />
+                android:textSize="20sp" />
         </com.google.android.material.card.MaterialCardView>
+
+        <!-- Latest notice from the CR -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardNotice"
             android:layout_width="match_parent"
@@ -81,12 +83,13 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
+                    android:lineSpacingExtra="3dp"
                     android:textColor="?attr/colorOnSurface"
-                    android:textSize="16sp"
-                    android:lineSpacingExtra="3dp" />
+                    android:textSize="16sp" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
-        <!-- Today's classes -->
+
+        <!-- University classes (purple world) -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -105,7 +108,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Today's classes"
+                    android:text="&#127979; Today's classes"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -115,9 +118,48 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
+                    android:lineSpacingExtra="4dp"
                     android:textColor="?attr/colorOnSurface"
-                    android:textSize="17sp"
-                    android:lineSpacingExtra="4dp" />
+                    android:textSize="17sp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Personal study plan (teal world) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardStudy"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:clickable="true"
+            android:focusable="true"
+            app:cardBackgroundColor="?attr/colorSurfaceVariant"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/study_teal"
+            app:strokeWidth="1.5dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="&#128214; Today's study plan"
+                    android:textColor="@color/study_teal"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvStudyToday"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:lineSpacingExtra="4dp"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="17sp" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -143,33 +185,48 @@
                 android:layout_height="64dp"
                 android:layout_marginStart="6dp"
                 android:layout_weight="1"
-                android:text="Routine"
+                android:text="Class routine"
                 app:cornerRadius="20dp" />
         </LinearLayout>
+
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnTimetable"
             style="@style/Widget.Material3.Button.TonalButton"
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:layout_marginTop="12dp"
-            android:text="Weekly timetable"
+            android:text="Class timetable"
             app:cornerRadius="20dp" />
+
+        <!-- Study plan: teal so it is never confused with classes -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnStudy"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="12dp"
+            android:backgroundTint="@color/study_teal"
+            android:text="&#128214; My study plan"
+            android:textColor="@android:color/white"
+            app:cornerRadius="20dp" />
+
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnStats"
             style="@style/Widget.Material3.Button.TonalButton"
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:layout_marginTop="12dp"
-            android:text="Statistics"
+            android:text="Deadline statistics"
             app:cornerRadius="20dp" />
+
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCalendar"
             style="@style/Widget.Material3.Button.TonalButton"
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:layout_marginTop="12dp"
-            android:text="Calendar"
+            android:text="Deadline calendar"
             app:cornerRadius="20dp" />
+
         <!-- CR only (hidden by code for normal students) -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnPost"
