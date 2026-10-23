@@ -8,6 +8,8 @@ import androidx.room.Database;
 import androidx.room.InvalidationTracker;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
+import androidx.room.migration.Migration;
+import androidx.sqlite.db.SupportSQLiteDatabase;
 
 import com.example.campuscompanion.widget.NextDeadlineWidget;
 import com.google.firebase.auth.FirebaseAuth;
@@ -16,14 +18,32 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-@Database(entities = {Deadline.class, RoutineEntry.class}, version = 1, exportSchema = false)
+@Database(entities = {Deadline.class, RoutineEntry.class, StudySession.class},
+        version = 2, exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
 
     public abstract DeadlineDao deadlineDao();
     public abstract RoutineDao routineDao();
+    public abstract StudyDao studyDao();
 
     // Room forbids writes on the main thread, so all writes go through this executor.
     public static final ExecutorService executor = Executors.newSingleThreadExecutor();
+
+    /** Version 1 -> 2: adds the personal study sessions table. Existing data is kept. */
+    static final Migration MIGRATION_1_2 = new Migration(1, 2) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase db) {
+            db.execSQL("CREATE TABLE IF NOT EXISTS `study_sessions` ("
+                    + "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "
+                    + "`subject` TEXT, "
+                    + "`topic` TEXT, "
+                    + "`daysMask` INTEGER NOT NULL, "
+                    + "`startMinutes` INTEGER NOT NULL, "
+                    + "`endMinutes` INTEGER NOT NULL, "
+                    + "`reminderMinutes` INTEGER NOT NULL, "
+                    + "`enabled` INTEGER NOT NULL)");
+        }
+    };
 
     private static volatile AppDatabase INSTANCE;
     private static volatile String INSTANCE_UID;
@@ -37,9 +57,11 @@ public abstract class AppDatabase extends RoomDatabase {
             synchronized (AppDatabase.class) {
                 if (INSTANCE == null || !uid.equals(INSTANCE_UID)) {
                     AppDatabase db = Room.databaseBuilder(
-                            app,
-                            AppDatabase.class,
-                            "campus_companion_" + uid + ".db").build();
+                                    app,
+                                    AppDatabase.class,
+                                    "campus_companion_" + uid + ".db")
+                            .addMigrations(MIGRATION_1_2)
+                            .build();
 
                     // Redraw the home screen widget whenever deadlines or the routine change
                     db.getInvalidationTracker().addObserver(

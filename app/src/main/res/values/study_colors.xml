@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Study plan is always teal; university classes stay purple -->
+    <color name="study_teal">#00897B</color>
+</resources>

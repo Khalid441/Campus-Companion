@@ -9,6 +9,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import java.util.Arrays;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.core.splashscreen.SplashScreen;
@@ -26,9 +28,17 @@ import com.example.campuscompanion.MainActivity;
 import com.example.campuscompanion.R;
 import com.example.campuscompanion.auth.UserSession;
 import com.example.campuscompanion.databinding.ActivityLoginBinding;
+import com.facebook.AccessToken;
+import com.facebook.CallbackManager;
+import com.facebook.FacebookCallback;
+import com.facebook.FacebookException;
+import com.facebook.login.LoginManager;
+import com.facebook.login.LoginResult;
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
 import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.FacebookAuthProvider;
+import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
@@ -38,6 +48,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private ActivityLoginBinding b;
     private FirebaseAuth auth;
+    private CallbackManager facebookCallbacks;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,6 +72,7 @@ public class LoginActivity extends AppCompatActivity {
 
         b.btnLogin.setOnClickListener(v -> login());
         b.btnGoogle.setOnClickListener(v -> googleSignIn());
+        b.btnFacebook.setOnClickListener(v -> facebookSignIn());
         b.tvForgot.setOnClickListener(v -> resetPassword());
         b.tvRegister.setOnClickListener(v ->
                 startActivity(new Intent(this, RegisterActivity.class)));
@@ -183,11 +195,62 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     // ------------------------------------------------------------------
+    // Facebook (Facebook SDK -> Firebase)
+    // ------------------------------------------------------------------
+
+    private void facebookSignIn() {
+        setLoading(true);
+        facebookCallbacks = CallbackManager.Factory.create();
+        LoginManager.getInstance().registerCallback(facebookCallbacks,
+                new FacebookCallback<LoginResult>() {
+                    @Override
+                    public void onSuccess(LoginResult result) {
+                        firebaseAuthWithFacebook(result.getAccessToken());
+                    }
+
+                    @Override
+                    public void onCancel() {
+                        setLoading(false);   // user closed the Facebook screen
+                    }
+
+                    @Override
+                    public void onError(FacebookException e) {
+                        fail("Facebook sign-in failed: " + e.getMessage());
+                    }
+                });
+        LoginManager.getInstance().logInWithReadPermissions(this,
+                Arrays.asList("email", "public_profile"));
+    }
+
+    private void firebaseAuthWithFacebook(AccessToken token) {
+        AuthCredential credential = FacebookAuthProvider.getCredential(token.getToken());
+        auth.signInWithCredential(credential)
+                .addOnSuccessListener(result -> loadProfile(result.getUser(), true))
+                .addOnFailureListener(e -> {
+                    LoginManager.getInstance().logOut();
+                    if (e instanceof FirebaseAuthUserCollisionException) {
+                        fail("This email is already registered with another sign-in method. "
+                                + "Please use that one.");
+                    } else {
+                        fail("Facebook sign-in failed: " + e.getMessage());
+                    }
+                });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (facebookCallbacks != null) {
+            facebookCallbacks.onActivityResult(requestCode, resultCode, data);
+        }
+    }
+
+    // ------------------------------------------------------------------
     // Profile
     // ------------------------------------------------------------------
 
     /** Reads name / section / role from users/{uid} and caches it locally. */
-    private void loadProfile(FirebaseUser user, boolean viaGoogle) {
+    private void loadProfile(FirebaseUser user, boolean viaSocial) {
         if (user == null) {
             fail("Sign-in failed. Please try again.");
             return;
@@ -195,8 +258,8 @@ public class LoginActivity extends AppCompatActivity {
         FirebaseFirestore.getInstance().collection("users").document(user.getUid()).get()
                 .addOnSuccessListener(doc -> {
                     if (!doc.exists() || doc.getString("section") == null) {
-                        if (viaGoogle) {
-                            // First time with Google: ask for the section, then create the profile
+                        if (viaSocial) {
+                            // First time with Google or Facebook: ask for the section, then create the profile
                             setLoading(false);
                             startActivity(new Intent(this, CompleteProfileActivity.class)
                                     .putExtra(CompleteProfileActivity.EXTRA_NAME, user.getDisplayName())
@@ -223,6 +286,7 @@ public class LoginActivity extends AppCompatActivity {
         b.progress.setVisibility(loading ? View.VISIBLE : View.INVISIBLE);
         b.btnLogin.setEnabled(!loading);
         b.btnGoogle.setEnabled(!loading);
+        b.btnFacebook.setEnabled(!loading);
         b.btnLogin.setText(loading ? "Please wait..." : "Log in");
     }
 

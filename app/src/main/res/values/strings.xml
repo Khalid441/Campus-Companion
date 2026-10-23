@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">Campus Companion</string>
+    <string name="facebook_app_id">REMOVED</string>
+    <string name="facebook_client_token">REMOVED</string>
+    <string name="fb_login_protocol_scheme">fbREMOVED</string>
 </resources>

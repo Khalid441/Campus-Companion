@@ -6,7 +6,9 @@ import android.content.Intent;
 
 import com.example.campuscompanion.data.local.AppDatabase;
 import com.example.campuscompanion.data.local.Deadline;
+import com.example.campuscompanion.data.local.StudySession;
 import com.example.campuscompanion.reminder.ReminderScheduler;
+import com.example.campuscompanion.reminder.StudyReminderScheduler;
 
 import java.util.List;
 
@@ -25,6 +27,9 @@ public class BootReceiver extends BroadcastReceiver {
                 List<Deadline> pending = AppDatabase.get(app).deadlineDao().getPending();
                 for (Deadline d : pending) {
                     ReminderScheduler.schedule(app, d);
+                }
+                for (StudySession s : AppDatabase.get(app).studyDao().getAllNow()) {
+                    StudyReminderScheduler.schedule(app, s);
                 }
             } finally {
                 result.finish();
