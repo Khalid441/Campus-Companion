@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Round badge background -->
+    <path
+        android:fillColor="#2E1F7A"
+        android:pathData="M54,0a54,54 0 1 1 0,108a54,54 0 1 1 0,-108z" />
+
+    <!-- Logo, scaled up to fill the badge -->
+    <group
+        android:pivotX="54"
+        android:pivotY="54"
+        android:scaleX="1.45"
+        android:scaleY="1.45">
+        <path
+            android:pathData="M54,24a30,30 0 1 1 0,60a30,30 0 1 1 0,-60z"
+            android:strokeColor="#FFC857"
+            android:strokeWidth="2.5" />
+        <path
+            android:fillColor="#CFC3FF"
+            android:pathData="M43,52v8c0,5 22,5 22,0v-8z" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M54,38L76,48L54,58L32,48z" />
+        <path
+            android:pathData="M71.5,49.5V61"
+            android:strokeColor="#FFC857"
+            android:strokeWidth="2"
+            android:strokeLineCap="round" />
+        <path
+            android:fillColor="#FFC857"
+            android:pathData="M71.5,63m-2.6,0a2.6,2.6 0 1 1 5.2,0a2.6,2.6 0 1 1 -5.2,0" />
+    </group>
+</vector>
