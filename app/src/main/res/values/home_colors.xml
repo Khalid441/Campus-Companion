@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- One accent colour per feature on the home screen (study plan keeps study_teal) -->
+    <color name="home_notice">#E08A00</color>
+    <color name="home_classes">#8B7CF6</color>
+    <color name="home_deadline">#E5484D</color>
+    <color name="home_routine">#7C5CFC</color>
+    <color name="home_timetable">#2F80ED</color>
+    <color name="home_stats">#5B5BD6</color>
+    <color name="home_calendar">#D6409F</color>
+    <color name="home_post">#E8590C</color>
+</resources>

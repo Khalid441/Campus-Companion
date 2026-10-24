@@ -62,7 +62,8 @@
             app:cardBackgroundColor="?attr/colorSurfaceVariant"
             app:cardCornerRadius="24dp"
             app:cardElevation="0dp"
-            app:strokeWidth="0dp">
+            app:strokeColor="@color/home_notice"
+            app:strokeWidth="1.5dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -70,13 +71,29 @@
                 android:orientation="vertical"
                 android:padding="20dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Latest notice"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="&#128226; Latest notice"
+                        android:textColor="@color/home_notice"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="View all  &#8250;"
+                        android:textColor="@color/home_notice"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
 
                 <TextView
                     android:id="@+id/tvNotice"
@@ -97,7 +114,8 @@
             app:cardBackgroundColor="?attr/colorSurfaceVariant"
             app:cardCornerRadius="24dp"
             app:cardElevation="0dp"
-            app:strokeWidth="0dp">
+            app:strokeColor="@color/home_classes"
+            app:strokeWidth="1.5dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -109,7 +127,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="&#127979; Today's classes"
-                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textColor="@color/home_classes"
                     android:textSize="14sp"
                     android:textStyle="bold" />
 
@@ -176,7 +194,10 @@
                 android:layout_height="64dp"
                 android:layout_marginEnd="6dp"
                 android:layout_weight="1"
-                android:text="Deadlines"
+                android:backgroundTint="@color/home_deadline"
+                android:text="&#9200;&#65039; Deadlines"
+                android:textColor="@android:color/white"
+                android:textStyle="bold"
                 app:cornerRadius="20dp" />
 
             <com.google.android.material.button.MaterialButton
@@ -185,17 +206,22 @@
                 android:layout_height="64dp"
                 android:layout_marginStart="6dp"
                 android:layout_weight="1"
-                android:text="Class routine"
+                android:backgroundTint="@color/home_routine"
+                android:text="&#128218; Class routine"
+                android:textColor="@android:color/white"
+                android:textStyle="bold"
                 app:cornerRadius="20dp" />
         </LinearLayout>
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnTimetable"
-            style="@style/Widget.Material3.Button.TonalButton"
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:layout_marginTop="12dp"
-            android:text="Class timetable"
+            android:backgroundTint="@color/home_timetable"
+            android:text="&#128338; Class timetable"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
             app:cornerRadius="20dp" />
 
         <!-- Study plan: teal so it is never confused with classes -->
@@ -207,34 +233,41 @@
             android:backgroundTint="@color/study_teal"
             android:text="&#128214; My study plan"
             android:textColor="@android:color/white"
+            android:textStyle="bold"
             app:cornerRadius="20dp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnStats"
-            style="@style/Widget.Material3.Button.TonalButton"
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:layout_marginTop="12dp"
-            android:text="Deadline statistics"
+            android:backgroundTint="@color/home_stats"
+            android:text="&#128202; Deadline statistics"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
             app:cornerRadius="20dp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCalendar"
-            style="@style/Widget.Material3.Button.TonalButton"
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:layout_marginTop="12dp"
-            android:text="Deadline calendar"
+            android:backgroundTint="@color/home_calendar"
+            android:text="&#128197; Deadline calendar"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
             app:cornerRadius="20dp" />
 
         <!-- CR only (hidden by code for normal students) -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnPost"
-            style="@style/Widget.Material3.Button.TonalButton"
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:layout_marginTop="12dp"
-            android:text="Post deadline to section"
+            android:backgroundTint="@color/home_post"
+            android:text="&#128227; Post deadline to section"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
             app:cornerRadius="20dp" />
 
         <!-- Settings card -->
@@ -257,14 +290,14 @@
                     android:id="@+id/swTracker"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Next-deadline tracker"
+                    android:text="&#128276; Next-deadline tracker"
                     android:textColor="?attr/colorOnSurface" />
 
                 <com.google.android.material.materialswitch.MaterialSwitch
                     android:id="@+id/swDark"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Dark mode"
+                    android:text="&#127769; Dark mode"
                     android:textColor="?attr/colorOnSurface" />
 
                 <com.google.android.material.button.MaterialButton
@@ -273,7 +306,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="Allow exact reminders" />
+                    android:text="&#9200;&#65039; Allow exact reminders" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -292,7 +325,7 @@
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:layout_marginTop="16dp"
-            android:text="Log out"
+            android:text="&#128682; Log out"
             android:textColor="?attr/colorError"
             app:cornerRadius="20dp"
             app:strokeColor="?attr/colorError" />
