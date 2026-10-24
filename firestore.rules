@@ -1,0 +1,68 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+
+    function myProfile()    { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
+    function uniDoc(code)   { return get(/databases/$(database)/documents/universities/$(code)).data; }
+    function sectionDoc(id) { return get(/databases/$(database)/documents/sections/$(id)).data; }
+
+    function emailDomain()  { return request.auth.token.email.split('@')[1].lower(); }
+
+    // A university email we can trust: verified, and not a Facebook login
+    // (Facebook emails are not proof that the person owns a university mailbox).
+    function trustedEmail() {
+      return request.auth.token.email_verified == true
+          && request.auth.token.firebase.sign_in_provider in ['password', 'google.com'];
+    }
+
+    // universities (name, domains, sections): public to read, edited only in the console
+    match /universities/{code} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /users/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+
+      allow create: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.role == 'student'
+        && request.resource.data.groupId ==
+             request.resource.data.university + '_' + request.resource.data.section
+        && (
+          // fixed list of sections (always for type 2) ...
+          request.resource.data.section in uniDoc(request.resource.data.university).get('sections', [])
+          ||
+          // ... or students type their own section (type 1 with freeSections = true)
+          ( uniDoc(request.resource.data.university).get('freeSections', false) == true
+            && request.resource.data.section.matches('[A-Z0-9_]{1,30}') )
+        )
+        && (
+          // type 1: university with email domains -> verified university email
+          ( uniDoc(request.resource.data.university).get('domains', []).size() > 0
+            && trustedEmail()
+            && uniDoc(request.resource.data.university).get('domains', []).hasAny([emailDomain()]) )
+          ||
+          // type 2: university without domains -> must know the class code
+          ( uniDoc(request.resource.data.university).get('domains', []).size() == 0
+            && request.resource.data.joinCode == sectionDoc(request.resource.data.groupId).joinCode )
+        );
+
+      // students can change their name, never role / university / section / class
+      allow update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.university == resource.data.university
+        && request.resource.data.section == resource.data.section
+        && request.resource.data.groupId == resource.data.groupId;
+    }
+
+    // Class data (notices, deadlines, and the class document with its join code):
+    // only members of that exact university + section can read; only its CR can write.
+    match /sections/{groupId}/{document=**} {
+      allow read: if request.auth != null && myProfile().groupId == groupId;
+      allow write: if request.auth != null
+                   && myProfile().role == 'cr'
+                   && myProfile().groupId == groupId;
+    }
+  }
+}
