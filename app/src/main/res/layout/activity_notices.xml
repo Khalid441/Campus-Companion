@@ -9,13 +9,31 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <TextView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="16dp"
-            android:text="Notices"
-            android:textSize="22sp"
-            android:textStyle="bold" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:padding="16dp"
+                android:text="Notices"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <!-- CR only (hidden by code for students) -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnClassCode"
+                style="?attr/borderlessButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:text="Class code"
+                android:visibility="gone" />
+        </LinearLayout>
 
         <FrameLayout
             android:layout_width="match_parent"

@@ -1,6 +1,7 @@
 package com.example.campuscompanion.ui;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.Gravity;
@@ -52,6 +53,70 @@ public class NoticesActivity extends AppCompatActivity implements NoticeAdapter.
 
         b.fabPost.setVisibility(UserSession.isCr(this) ? View.VISIBLE : View.GONE);
         b.fabPost.setOnClickListener(v -> showPostDialog());
+
+        b.btnClassCode.setVisibility(UserSession.isCr(this) ? View.VISIBLE : View.GONE);
+        b.btnClassCode.setOnClickListener(v -> showClassCodeDialog());
+    }
+
+    // ---- class code (join code for universities without student emails) ----
+
+    private static final String CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+    private static String newCode() {
+        java.security.SecureRandom r = new java.security.SecureRandom();
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 6; i++) sb.append(CODE_CHARS.charAt(r.nextInt(CODE_CHARS.length())));
+        return sb.toString();
+    }
+
+    /** CR: shows the class code with Share and New code buttons. */
+    private void showClassCodeDialog() {
+        if (section == null) return;
+        FirebaseFirestore.getInstance().collection("sections").document(section).get()
+                .addOnSuccessListener(doc -> {
+                    String code = doc.getString("joinCode");
+                    if (code == null || code.isEmpty()) {
+                        new MaterialAlertDialogBuilder(this)
+                                .setTitle("Class code")
+                                .setMessage("This class does not use a class code. Students join with their university email.")
+                                .setPositiveButton("OK", null)
+                                .show();
+                        return;
+                    }
+                    new MaterialAlertDialogBuilder(this)
+                            .setTitle("Class code")
+                            .setMessage(code + "\n\nShare it only with your classmates.")
+                            .setPositiveButton("Share", (d, w) -> shareCode(code))
+                            .setNeutralButton("New code", (d, w) -> resetCode())
+                            .setNegativeButton("Close", null)
+                            .show();
+                })
+                .addOnFailureListener(e -> Toast.makeText(this,
+                        "Could not load code: " + e.getMessage(), Toast.LENGTH_LONG).show());
+    }
+
+    private void shareCode(String code) {
+        String uni = UserSession.university(this);
+        String sec = UserSession.sectionName(this);
+        String text = "Join Campus Companion.\nUniversity: " + uni
+                + "\nSection: " + (sec == null ? "" : sec.replace('_', ' '))
+                + "\nClass code: " + code;
+        Intent send = new Intent(Intent.ACTION_SEND);
+        send.setType("text/plain");
+        send.putExtra(Intent.EXTRA_TEXT, text);
+        startActivity(Intent.createChooser(send, "Share class code"));
+    }
+
+    /** Old code stops working for new sign-ups; people already in the class stay in. */
+    private void resetCode() {
+        String code = newCode();
+        Map<String, Object> data = new HashMap<>();
+        data.put("joinCode", code);
+        FirebaseFirestore.getInstance().collection("sections").document(section)
+                .set(data, com.google.firebase.firestore.SetOptions.merge())
+                .addOnSuccessListener(v -> shareCode(code))
+                .addOnFailureListener(e -> Toast.makeText(this,
+                        "Could not change code: " + e.getMessage(), Toast.LENGTH_LONG).show());
     }
 
     @Override

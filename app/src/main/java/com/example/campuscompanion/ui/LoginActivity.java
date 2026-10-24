@@ -58,7 +58,7 @@ public class LoginActivity extends AppCompatActivity {
         auth = FirebaseAuth.getInstance();
 
         // Already signed in on this phone: skip straight to the app
-        if (auth.getCurrentUser() != null && UserSession.section(this) != null) {
+        if (auth.getCurrentUser() != null && UserSession.hasProfile(this)) {
             goMain();
             return;
         }
@@ -249,7 +249,7 @@ public class LoginActivity extends AppCompatActivity {
     // Profile
     // ------------------------------------------------------------------
 
-    /** Reads name / section / role from users/{uid} and caches it locally. */
+    /** Reads name / university / section / role from users/{uid} and caches it locally. */
     private void loadProfile(FirebaseUser user, boolean viaSocial) {
         if (user == null) {
             fail("Sign-in failed. Please try again.");
@@ -257,7 +257,20 @@ public class LoginActivity extends AppCompatActivity {
         }
         FirebaseFirestore.getInstance().collection("users").document(user.getUid()).get()
                 .addOnSuccessListener(doc -> {
-                    if (!doc.exists() || doc.getString("section") == null) {
+                    if (doc.exists() && (doc.getString("university") == null
+                            || doc.getString("section") == null)) {
+                        auth.signOut();
+                        LoginManager.getInstance().logOut();
+                        fail("Your profile needs updating (university missing). Ask the admin.");
+                        return;
+                    }
+                    if (!doc.exists()) {
+                        // University-email sign-up that was not verified yet: continue verification
+                        if (UserSession.hasPending(this, user.getUid())) {
+                            startActivity(new Intent(this, VerifyEmailActivity.class));
+                            finish();
+                            return;
+                        }
                         if (viaSocial) {
                             // First time with Google or Facebook: ask for the section, then create the profile
                             setLoading(false);
@@ -270,7 +283,7 @@ public class LoginActivity extends AppCompatActivity {
                         }
                         return;
                     }
-                    UserSession.save(this, doc.getString("name"),
+                    UserSession.save(this, doc.getString("name"), doc.getString("university"),
                             doc.getString("section"), doc.getString("role"));
                     goMain();
                 })

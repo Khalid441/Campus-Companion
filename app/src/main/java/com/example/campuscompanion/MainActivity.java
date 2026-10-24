@@ -106,7 +106,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         // Not signed in: back to the login screen
-        if (FirebaseAuth.getInstance().getCurrentUser() == null || UserSession.section(this) == null) {
+        if (FirebaseAuth.getInstance().getCurrentUser() == null || !UserSession.hasProfile(this)) {
             goToLogin();
             return;
         }
@@ -134,7 +134,7 @@ public class MainActivity extends AppCompatActivity {
         int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
         String hello = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
         b.tvGreeting.setText(hello + (name.isEmpty() ? "" : ",\n" + name));
-        b.tvSection.setText("Section " + UserSession.section(this)
+        b.tvSection.setText(UserSession.label(this)
                 + (UserSession.isCr(this) ? "  \u2022  Class representative" : ""));
 
         // Real-time sync of shared deadlines + background fallback
