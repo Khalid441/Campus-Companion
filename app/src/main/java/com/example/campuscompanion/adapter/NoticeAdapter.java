@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.campuscompanion.databinding.ItemNoticeBinding;
 import com.example.campuscompanion.model.Notice;
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -20,6 +21,7 @@ public class NoticeAdapter extends ListAdapter<Notice, NoticeAdapter.VH> {
 
     public interface Listener {
         void onLongPress(Notice n);
+        void onAck(Notice n, boolean acked);
     }
 
     private static final SimpleDateFormat FMT =
@@ -35,7 +37,8 @@ public class NoticeAdapter extends ListAdapter<Notice, NoticeAdapter.VH> {
         public boolean areContentsTheSame(@NonNull Notice a, @NonNull Notice b) {
             return Objects.equals(a.message, b.message)
                     && Objects.equals(a.author, b.author)
-                    && a.createdAt == b.createdAt;
+                    && a.createdAt == b.createdAt
+                    && Objects.equals(a.ackedBy, b.ackedBy);
         }
     };
 
@@ -69,6 +72,11 @@ public class NoticeAdapter extends ListAdapter<Notice, NoticeAdapter.VH> {
             b.tvMessage.setText(n.message);
             String who = (n.author == null || n.author.isEmpty()) ? "CR" : n.author;
             b.tvMeta.setText(who + "  \u2022  " + FMT.format(new Date(n.createdAt)));
+            String uid = FirebaseAuth.getInstance().getUid();
+            final boolean acked = uid != null && n.ackedBy.contains(uid);
+            b.btnAck.setText((acked ? "\u2713 Got it" : "Got it")
+                    + (n.ackedBy.isEmpty() ? "" : "  \u2022  " + n.ackedBy.size()));
+            b.btnAck.setOnClickListener(v -> listener.onAck(n, !acked));
             b.getRoot().setOnLongClickListener(v -> {
                 listener.onLongPress(n);
                 return true;

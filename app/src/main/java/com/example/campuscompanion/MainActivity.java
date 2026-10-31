@@ -16,6 +16,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.CompoundButton;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -26,6 +27,9 @@ import androidx.core.content.ContextCompat;
 
 import com.example.campuscompanion.auth.UserSession;
 import com.example.campuscompanion.data.local.AppDatabase;
+import com.example.campuscompanion.data.local.AttendanceCourse;
+import com.example.campuscompanion.data.local.AttendanceDao;
+import com.example.campuscompanion.data.local.AttendanceRecord;
 import com.example.campuscompanion.data.local.StudySession;
 import com.example.campuscompanion.data.remote.WeatherClient;
 import com.example.campuscompanion.data.remote.WeatherResponse;
@@ -39,6 +43,7 @@ import com.example.campuscompanion.service.NextDeadlineService;
 import com.example.campuscompanion.sync.NoticeManager;
 import com.example.campuscompanion.sync.SyncManager;
 import com.example.campuscompanion.ui.AddDeadlineActivity;
+import com.example.campuscompanion.ui.AttendanceActivity;
 import com.example.campuscompanion.ui.CalendarActivity;
 import com.example.campuscompanion.ui.DeadlinesActivity;
 import com.example.campuscompanion.ui.LoginActivity;
@@ -47,6 +52,9 @@ import com.example.campuscompanion.ui.RoutineActivity;
 import com.example.campuscompanion.ui.StatsActivity;
 import com.example.campuscompanion.ui.StudyActivity;
 import com.example.campuscompanion.ui.TimetableActivity;
+import com.example.campuscompanion.util.AttendanceMath;
+import com.example.campuscompanion.util.AttendanceStats;
+import com.example.campuscompanion.util.BottomNav;
 import com.example.campuscompanion.util.TimeUtil;
 import com.example.campuscompanion.widget.NextDeadlineWidget;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -55,9 +63,11 @@ import com.google.android.gms.location.Priority;
 import com.google.android.gms.tasks.CancellationTokenSource;
 import com.google.firebase.auth.FirebaseAuth;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -69,6 +79,8 @@ public class MainActivity extends AppCompatActivity {
     private SharedPreferences prefs;
     private FusedLocationProviderClient fusedClient;
     private Call<WeatherResponse> currentCall;
+    private List<AttendanceCourse> homeCourses = new ArrayList<>();
+    private List<AttendanceRecord> homeRecords = new ArrayList<>();
 
     private final ActivityResultLauncher<String> notificationPermission =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> { });
@@ -113,6 +125,7 @@ public class MainActivity extends AppCompatActivity {
 
         b = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(b.getRoot());
+        BottomNav.attach(this, R.id.nav_home);
 
         prefs = getSharedPreferences(NextDeadlineService.PREFS, Context.MODE_PRIVATE);
         NotificationHelper.createChannels(this);
@@ -184,6 +197,9 @@ public class MainActivity extends AppCompatActivity {
 
         showTodaysClasses();
         showTodaysStudy();
+        showAttendance();
+        arrangeCardsByTime();
+        if (savedInstanceState == null) animateCards();
     }
 
     @Override
@@ -399,6 +415,82 @@ public class MainActivity extends AppCompatActivity {
                     ? "Nothing planned. Tap to add a study session."
                     : sb.toString());
         });
+    }
+
+    // ---------------------------------------------------------------------
+    // Attendance card, time-of-day order and entrance animation
+    // ---------------------------------------------------------------------
+
+    private void showAttendance() {
+        AttendanceDao dao = AppDatabase.get(this).attendanceDao();
+        dao.getCourses().observe(this, list -> {
+            homeCourses = list;
+            renderAttendance();
+        });
+        dao.getAllRecords().observe(this, list -> {
+            homeRecords = list;
+            renderAttendance();
+        });
+        b.cardAttendance.setOnClickListener(v ->
+                startActivity(new Intent(this, AttendanceActivity.class)));
+    }
+
+    private void renderAttendance() {
+        if (b == null) return;
+        if (homeCourses.isEmpty()) {
+            b.tvAttendanceHome.setText("Add your courses and track every class.");
+            return;
+        }
+        Map<Integer, int[]> counts = AttendanceStats.counts(homeRecords);
+        int overall = AttendanceStats.overallPercent(counts);
+        if (overall < 0) {
+            b.tvAttendanceHome.setText("No classes marked yet. Tap to mark today's classes.");
+            return;
+        }
+
+        AttendanceCourse worst = null;
+        AttendanceMath.Result worstStats = null;
+        for (AttendanceCourse c : homeCourses) {
+            AttendanceMath.Result r = AttendanceStats.forCourse(c, counts);
+            if (r.held == 0) continue;
+            if (worstStats == null || r.percent - c.minPercent < worstStats.percent - worst.minPercent) {
+                worst = c;
+                worstStats = r;
+            }
+        }
+
+        StringBuilder sb = new StringBuilder("Overall ").append(overall).append("%");
+        int streak = AttendanceStats.streak(homeRecords);
+        if (streak >= 2) sb.append("   \uD83D\uDD25 ").append(streak).append(" in a row");
+        if (worst != null) {
+            sb.append("\n").append(worstStats.level == AttendanceMath.LOW ? "\u26A0\uFE0F " : "")
+                    .append("Lowest: ").append(worst.title()).append("  ")
+                    .append(worstStats.percent).append("% (min ").append(worst.minPercent).append("%)");
+        }
+        b.tvAttendanceHome.setText(sb);
+    }
+
+    /** In the evening the study plan moves above today's classes. */
+    private void arrangeCardsByTime() {
+        int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
+        ViewGroup parent = (ViewGroup) b.cardClasses.getParent();
+        if (hour >= 17 && b.cardStudy.getParent() == parent) {
+            int classesIndex = parent.indexOfChild(b.cardClasses);
+            parent.removeView(b.cardStudy);
+            parent.addView(b.cardStudy, classesIndex);
+        }
+    }
+
+    /** Cards slide up and fade in, one after another. */
+    private void animateCards() {
+        ViewGroup parent = b.homeContainer;
+        for (int i = 0; i < parent.getChildCount(); i++) {
+            View v = parent.getChildAt(i);
+            v.setAlpha(0f);
+            v.setTranslationY(40f);
+            v.animate().alpha(1f).translationY(0f)
+                    .setStartDelay(Math.min(i, 8) * 50L).setDuration(300).start();
+        }
     }
 
     /** ContentProvider demo: count deadlines through a content:// URI. */

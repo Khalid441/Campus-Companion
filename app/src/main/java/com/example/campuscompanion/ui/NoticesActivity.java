@@ -13,11 +13,13 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.example.campuscompanion.R;
 import com.example.campuscompanion.adapter.NoticeAdapter;
 import com.example.campuscompanion.auth.UserSession;
 import com.example.campuscompanion.databinding.ActivityNoticesBinding;
 import com.example.campuscompanion.model.Notice;
 import com.example.campuscompanion.sync.NoticeManager;
+import com.example.campuscompanion.util.BottomNav;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -44,6 +46,7 @@ public class NoticesActivity extends AppCompatActivity implements NoticeAdapter.
         super.onCreate(savedInstanceState);
         b = ActivityNoticesBinding.inflate(getLayoutInflater());
         setContentView(b.getRoot());
+        BottomNav.attach(this, R.id.nav_notices);
 
         section = UserSession.section(this);
 
@@ -182,6 +185,20 @@ public class NoticesActivity extends AppCompatActivity implements NoticeAdapter.
                 .add(doc)
                 .addOnFailureListener(e -> Toast.makeText(app,
                         "Post failed: " + e.getMessage(), Toast.LENGTH_LONG).show());
+    }
+
+    /** "Got it": a student marks a notice as read; the CR sees how many did. */
+    @Override
+    public void onAck(Notice n, boolean ack) {
+        String uid = FirebaseAuth.getInstance().getUid();
+        if (uid == null || n.id == null || section == null) return;
+        Context app = getApplicationContext();
+        FirebaseFirestore.getInstance()
+                .collection("sections").document(section)
+                .collection("notices").document(n.id)
+                .update("ackedBy", ack ? FieldValue.arrayUnion(uid) : FieldValue.arrayRemove(uid))
+                .addOnFailureListener(e -> Toast.makeText(app,
+                        "Could not save: " + e.getMessage(), Toast.LENGTH_LONG).show());
     }
 
     @Override

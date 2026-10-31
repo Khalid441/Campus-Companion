@@ -19,7 +19,9 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.campuscompanion.R;
 import com.example.campuscompanion.adapter.DeadlineAdapter;
+import com.example.campuscompanion.util.BottomNav;
 import com.example.campuscompanion.auth.UserSession;
 import com.example.campuscompanion.data.local.AppDatabase;
 import com.example.campuscompanion.data.local.Deadline;
@@ -78,6 +80,7 @@ public class DeadlinesActivity extends AppCompatActivity implements DeadlineAdap
         super.onCreate(savedInstanceState);
         b = ActivityDeadlinesBinding.inflate(getLayoutInflater());
         setContentView(b.getRoot());
+        BottomNav.attach(this, R.id.nav_deadlines);
 
         dao = AppDatabase.get(this).deadlineDao();
 

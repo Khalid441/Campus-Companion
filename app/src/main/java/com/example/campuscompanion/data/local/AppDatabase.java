@@ -18,13 +18,15 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-@Database(entities = {Deadline.class, RoutineEntry.class, StudySession.class},
-        version = 2, exportSchema = false)
+@Database(entities = {Deadline.class, RoutineEntry.class, StudySession.class,
+        AttendanceCourse.class, AttendanceRecord.class},
+        version = 3, exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
 
     public abstract DeadlineDao deadlineDao();
     public abstract RoutineDao routineDao();
     public abstract StudyDao studyDao();
+    public abstract AttendanceDao attendanceDao();
 
     // Room forbids writes on the main thread, so all writes go through this executor.
     public static final ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -45,6 +47,25 @@ public abstract class AppDatabase extends RoomDatabase {
         }
     };
 
+    /** Version 2 -> 3: adds the attendance tracker tables. Existing data is kept. */
+    static final Migration MIGRATION_2_3 = new Migration(2, 3) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase db) {
+            db.execSQL("CREATE TABLE IF NOT EXISTS `attendance_courses` ("
+                    + "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "
+                    + "`name` TEXT, "
+                    + "`code` TEXT, "
+                    + "`minPercent` INTEGER NOT NULL, "
+                    + "`totalPlanned` INTEGER NOT NULL, "
+                    + "`createdAt` INTEGER NOT NULL)");
+            db.execSQL("CREATE TABLE IF NOT EXISTS `attendance_records` ("
+                    + "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "
+                    + "`courseId` INTEGER NOT NULL, "
+                    + "`date` INTEGER NOT NULL, "
+                    + "`status` INTEGER NOT NULL)");
+        }
+    };
+
     private static volatile AppDatabase INSTANCE;
     private static volatile String INSTANCE_UID;
 
@@ -60,7 +81,7 @@ public abstract class AppDatabase extends RoomDatabase {
                                     app,
                                     AppDatabase.class,
                                     "campus_companion_" + uid + ".db")
-                            .addMigrations(MIGRATION_1_2)
+                            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                             .build();
 
                     // Redraw the home screen widget whenever deadlines or the routine change

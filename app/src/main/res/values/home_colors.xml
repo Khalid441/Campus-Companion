@@ -9,4 +9,10 @@
     <color name="home_stats">#5B5BD6</color>
     <color name="home_calendar">#D6409F</color>
     <color name="home_post">#E8590C</color>
+    <color name="home_attendance">#16A34A</color>
+
+    <!-- Attendance ring: safe / close to the limit / below the limit -->
+    <color name="att_safe">#16A34A</color>
+    <color name="att_close">#F59E0B</color>
+    <color name="att_low">#E5484D</color>
 </resources>

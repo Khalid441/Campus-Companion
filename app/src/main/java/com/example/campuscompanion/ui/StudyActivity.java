@@ -11,7 +11,9 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.campuscompanion.R;
 import com.example.campuscompanion.adapter.StudyAdapter;
+import com.example.campuscompanion.util.BottomNav;
 import com.example.campuscompanion.data.local.AppDatabase;
 import com.example.campuscompanion.data.local.StudyDao;
 import com.example.campuscompanion.data.local.StudySession;
@@ -33,6 +35,7 @@ public class StudyActivity extends AppCompatActivity implements StudyAdapter.Lis
         super.onCreate(savedInstanceState);
         b = ActivityStudyBinding.inflate(getLayoutInflater());
         setContentView(b.getRoot());
+        BottomNav.attach(this, R.id.nav_study);
 
         dao = AppDatabase.get(this).studyDao();
 

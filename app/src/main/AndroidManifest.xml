@@ -76,6 +76,7 @@
         <activity android:name=".ui.NoticesActivity" android:exported="false" />
         <activity android:name=".ui.StudyActivity" android:exported="false" />
         <activity android:name=".ui.AddStudyActivity" android:exported="false" />
+        <activity android:name=".ui.AttendanceActivity" android:exported="false" />
 
         <receiver android:name=".receiver.ReminderReceiver" android:exported="false" />
         <receiver android:name=".receiver.StudyReminderReceiver" android:exported="false" />

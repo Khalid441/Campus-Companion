@@ -76,6 +76,9 @@ This project was built for the Android part of the course plan (Weeks 8–13). T
 | 📚 **Class routine** | Weekly university classes with room and teacher. Today's classes show on the home screen. |
 | 🕒 **Class timetable** | A weekly grid (days across, hours down) drawn with a custom Canvas view. |
 | 📖 **My study plan** | Personal study sessions with subject, topic, days of the week, time and reminder. Sessions can be edited, switched on or off, or deleted. Kept separate from university classes (teal colour) so they never get mixed up. |
+| ✅ **Attendance tracker** | The student adds their own courses (name, optional code, **own minimum %**, optional total classes) and marks each class **Present / Absent / Cancelled** with one tap, today or on another date. Each course shows a coloured progress ring, counts, and plain advice such as *"You can miss 3 more classes and still reach 75%"* or *"Attend the next 4 classes in a row"*. History can be edited, and there is an overall % and a streak. Saved on the phone (Room), works offline. |
+| 🧭 **Bottom navigation** | Home, Notices, Deadlines, Attendance and Study are one tap apart. |
+| 🌅 **Smart home screen** | Cards slide in, the study plan moves above today's classes in the evening, and an attendance card shows the lowest course. |
 | 📊 **Deadline statistics** | Completion donut chart, a bar chart of deadlines due in the next 7 days, and a priority breakdown. |
 | 📅 **Deadline calendar** | A month calendar marking days that have deadlines. |
 | 📌 **Persistent tracker** | Optional foreground notification that always shows the next unfinished deadline. |
@@ -88,6 +91,7 @@ This project was built for the Android part of the course plan (Weeks 8–13). T
 | Feature | What it does |
 |---|---|
 | 📢 **Class notices** | The CR posts notices to the section. Students get them instantly with a notification. |
+| 👍 **"Got it" on notices** | Students tap *Got it* on a notice and everyone, including the CR, sees how many have read it. |
 | 📣 **Shared deadlines** | The CR posts a deadline once and it appears for the whole section. Students keep their own "done" tick. |
 | 🏫 **University + section separation** | Each class has its own private space. A student from another section or another university never sees it. |
 | 🔑 **Two ways to join** | **Type 1:** universities with student email: sign up with the verified university email (for example KUET). **Type 2:** universities without student email: sign up with any email plus a **class code** from the CR. |
@@ -252,6 +256,8 @@ app/src/main/java/com/example/campuscompanion/
 | `deadlines` | id, title, course, note, priority, dueAt, remindBeforeMinutes, done, isShared, remoteId |
 | `routine` | id, course, room, teacher, dayOfWeek, startMinutes, endMinutes |
 | `study_sessions` | id, subject, topic, daysMask, startMinutes, endMinutes, reminderMinutes, enabled |
+| `attendance_courses` | id, name, code, minPercent, totalPlanned, createdAt |
+| `attendance_records` | id, courseId, date, status (0 present, 1 absent, 2 cancelled) |
 
 **Cloud (Firestore)**
 
@@ -259,7 +265,7 @@ app/src/main/java/com/example/campuscompanion/
 universities/{code}           name, domains[], sections[], freeSections
 users/{uid}                   name, email, university, section, groupId, role
 sections/{groupId}            joinCode (for universities without student email)
-sections/{groupId}/notices    message, author, createdBy, createdAt
+sections/{groupId}/notices    message, author, createdBy, createdAt, ackedBy[]
 sections/{groupId}/deadlines  title, course, note, priority, dueAt, createdBy
 ```
 
