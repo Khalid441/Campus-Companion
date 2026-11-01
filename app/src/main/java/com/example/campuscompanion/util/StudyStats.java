@@ -14,7 +14,7 @@ public final class StudyStats {
     private static final String KEY_GOAL = "goal";
     public static final int DEFAULT_GOAL = 5;
     /** 0 means "no goal". */
-    public static final int[] GOAL_CHOICES = {0, 1, 2, 3, 5, 7, 10, 15, 20};
+    public static final int[] GOAL_CHOICES = {0, 1, 2, 3, 5, 7, 10, 15, 20};   // (no longer used by the dialog)
 
     private StudyStats() { }
 

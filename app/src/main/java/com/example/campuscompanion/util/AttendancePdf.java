@@ -66,12 +66,6 @@ public final class AttendancePdf {
                         12, false, r.level == AttendanceMath.LOW ? 0xFFB91C1C : Color.BLACK);
                 page.text(r.advice, 11, false, Color.DKGRAY);
 
-                int days = ExamUtil.daysLeft(course.examDate);
-                if (days >= 0) {
-                    page.text("Exam: " + day.format(new Date(course.examDate)) + " (" + ExamUtil.label(days) + ")",
-                            11, false, Color.DKGRAY);
-                }
-
                 List<String> covered = new ArrayList<>();
                 for (Topic t : topics) {
                     if (t.courseId == course.id && t.taught && t.title != null) covered.add(t.title);

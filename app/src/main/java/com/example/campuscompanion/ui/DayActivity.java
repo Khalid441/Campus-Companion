@@ -60,6 +60,7 @@ public class DayActivity extends AppCompatActivity {
     private List<AttendanceCourse> courses = new ArrayList<>();
     private List<AttendanceRecord> records = new ArrayList<>();
     private List<Topic> topics = new ArrayList<>();
+    private List<com.example.campuscompanion.data.local.Exam> exams = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,6 +78,7 @@ public class DayActivity extends AppCompatActivity {
         db.attendanceDao().getCourses().observe(this, l -> { courses = l; render(); });
         db.attendanceDao().getAllRecords().observe(this, l -> { records = l; render(); });
         db.topicDao().getAll().observe(this, l -> { topics = l; render(); });
+        db.examDao().getAll().observe(this, l -> { exams = l; render(); });
     }
 
     // ---------------------------------------------------------------------
@@ -178,6 +180,17 @@ public class DayActivity extends AppCompatActivity {
             out.add(e);
         }
 
+        for (com.example.campuscompanion.data.local.Exam x : exams) {
+            if (!DateUtil.sameDay(x.examDate, selected)) continue;
+            Ev e = new Ev();
+            e.minutes = -1;                      // all day: sorted first
+            e.kind = "EXAM";
+            e.title = x.subject;
+            e.color = deadlineColor;
+            e.meta = x.note == null || x.note.isEmpty() ? "Exam day" : x.note;
+            out.add(e);
+        }
+
         Collections.sort(out, (x, y) -> Integer.compare(x.minutes, y.minutes));
 
         boolean isToday = selected == DateUtil.startOfDay(now);
@@ -191,7 +204,7 @@ public class DayActivity extends AppCompatActivity {
             e.kind = "REVISE • " + (t.revisedCount + 1) + " OF " + RevisionPlan.STAGES;
             e.title = t.title;
             e.color = teal;
-            String cname = null;
+            String cname = t.subject == null || t.subject.isEmpty() ? null : t.subject;
             for (AttendanceCourse c : courses) if (c.id == t.courseId) cname = c.title();
             e.meta = cname == null ? "Revision" : cname;
             out.add(e);
@@ -207,7 +220,7 @@ public class DayActivity extends AppCompatActivity {
 
     private View row(Ev e, boolean last) {
         ItemDayEventBinding r = ItemDayEventBinding.inflate(LayoutInflater.from(this), b.timeline, false);
-        r.tvEvTime.setText(e.minutes == NO_TIME ? "Any time" : TimeUtil.fmt(e.minutes));
+        r.tvEvTime.setText(e.minutes == NO_TIME ? "Any time" : e.minutes < 0 ? "All day" : TimeUtil.fmt(e.minutes));
         r.tvEvKind.setText(e.kind);
         r.tvEvKind.setTextColor(e.color);
         r.tvEvTitle.setText(e.title);

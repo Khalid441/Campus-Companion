@@ -281,25 +281,6 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
             if (existing.totalPlanned > 0) d.etTotal.setText(String.valueOf(existing.totalPlanned));
         }
 
-        final long[] exam = {existing == null ? 0 : existing.examDate};
-        d.etExam.setText(exam[0] > 0 ? DAY.format(new Date(exam[0])) : "");
-        d.etExam.setOnClickListener(v -> {
-            Calendar start = Calendar.getInstance();
-            if (exam[0] > 0) start.setTimeInMillis(exam[0]);
-            DatePickerDialog picker = new DatePickerDialog(this, (pk, y, m, day) -> {
-                Calendar chosen = Calendar.getInstance();
-                chosen.set(y, m, day);
-                exam[0] = com.example.campuscompanion.util.DateUtil.startOfDay(chosen.getTimeInMillis());
-                d.etExam.setText(DAY.format(new Date(exam[0])));
-            }, start.get(Calendar.YEAR), start.get(Calendar.MONTH), start.get(Calendar.DAY_OF_MONTH));
-            picker.getDatePicker().setMinDate(System.currentTimeMillis() - 1000);
-            picker.setButton(DatePickerDialog.BUTTON_NEUTRAL, "Clear", (di, w) -> {
-                exam[0] = 0;
-                d.etExam.setText("");
-            });
-            picker.show();
-        });
-
         androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
                 .setTitle(existing == null ? "Add course" : "Edit course")
                 .setView(d.getRoot())
@@ -324,7 +305,7 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
             c.code = code;
             c.minPercent = min;
             c.totalPlanned = Math.max(0, total);
-            c.examDate = exam[0];
+            c.examDate = existing == null ? 0 : existing.examDate;   // old column, no longer used
 
             if (existing == null) {
                 c.createdAt = System.currentTimeMillis();

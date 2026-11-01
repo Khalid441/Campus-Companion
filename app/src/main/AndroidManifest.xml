@@ -83,6 +83,7 @@
         <activity android:name=".ui.RecapActivity" android:exported="false" />
         <activity android:name=".ui.SettingsActivity" android:exported="false" />
         <activity android:name=".ui.AboutActivity" android:exported="false" />
+        <activity android:name=".ui.ExamsActivity" android:exported="false" />
 
         <receiver android:name=".receiver.ReminderReceiver" android:exported="false" />
         <receiver android:name=".receiver.StudyReminderReceiver" android:exported="false" />

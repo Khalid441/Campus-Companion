@@ -47,6 +47,7 @@ import com.example.campuscompanion.ui.AttendanceActivity;
 import com.example.campuscompanion.ui.CalendarActivity;
 import com.example.campuscompanion.ui.DayActivity;
 import com.example.campuscompanion.ui.DeadlinesActivity;
+import com.example.campuscompanion.ui.ExamsActivity;
 import com.example.campuscompanion.ui.LoginActivity;
 import com.example.campuscompanion.ui.NoticesActivity;
 import com.example.campuscompanion.ui.RecapActivity;
@@ -89,6 +90,7 @@ public class MainActivity extends AppCompatActivity {
     private List<AttendanceCourse> homeCourses = new ArrayList<>();
     private List<AttendanceRecord> homeRecords = new ArrayList<>();
     private List<RoutineEntry> todayClasses = new ArrayList<>();
+    private List<com.example.campuscompanion.data.local.Exam> homeExams = new ArrayList<>();
     private Notice shownNotice;
 
     private final ActivityResultLauncher<String> notificationPermission =
@@ -164,6 +166,7 @@ public class MainActivity extends AppCompatActivity {
         b.tvWeather.setOnClickListener(v -> {
             if (hasLocationPermission()) loadWeather(); else loadWeatherDefaultCity();
         });
+        b.tvNextExam.setOnClickListener(v -> startActivity(new Intent(this, ExamsActivity.class)));
         buildTiles();
 
         // Re-arm this account's reminders (alarms are cancelled on logout)
@@ -389,6 +392,10 @@ public class MainActivity extends AppCompatActivity {
             renderNextClass();
         });
         db.deadlineDao().getNextPending().observe(this, d -> renderNextDeadline(d));
+        db.examDao().getAll().observe(this, list -> {
+            homeExams = list;
+            renderExam();
+        });
     }
 
     private void renderNextClass() {
@@ -467,7 +474,6 @@ public class MainActivity extends AppCompatActivity {
         dao.getCourses().observe(this, list -> {
             homeCourses = list;
             renderAttendance();
-            renderExam();
         });
         dao.getAllRecords().observe(this, list -> {
             homeRecords = list;
@@ -477,15 +483,15 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(new Intent(this, AttendanceActivity.class)));
     }
 
-    /** The nearest upcoming exam among the attendance courses. */
+    /** The nearest upcoming exam from the Exams list. */
     private void renderExam() {
         if (b == null) return;
-        AttendanceCourse best = null;
+        com.example.campuscompanion.data.local.Exam best = null;
         int bestDays = Integer.MAX_VALUE;
-        for (AttendanceCourse c : homeCourses) {
-            int d = com.example.campuscompanion.util.ExamUtil.daysLeft(c.examDate);
+        for (com.example.campuscompanion.data.local.Exam x : homeExams) {
+            int d = com.example.campuscompanion.util.ExamUtil.daysLeft(x.examDate);
             if (d >= 0 && d < bestDays) {
-                best = c;
+                best = x;
                 bestDays = d;
             }
         }
@@ -494,7 +500,7 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         b.tvNextExam.setVisibility(View.VISIBLE);
-        b.tvNextExam.setText("Exam: " + best.title() + "  \u2022  "
+        b.tvNextExam.setText("Exam: " + best.subject + "  \u2022  "
                 + com.example.campuscompanion.util.ExamUtil.label(bestDays));
     }
 
@@ -566,11 +572,12 @@ public class MainActivity extends AppCompatActivity {
                 {"Statistics", R.drawable.ic_tile_stats, R.color.home_stats, StatsActivity.class},
                 {"Revision", R.drawable.ic_tile_revision, R.color.study_teal, RevisionActivity.class},
                 {"Recap", R.drawable.ic_tile_recap, R.color.home_attendance, RecapActivity.class},
+                {"Exams", R.drawable.ic_tile_exam, R.color.home_deadline, ExamsActivity.class},
         };
         b.tileGrid.removeAllViews();
         LinearLayout row = null;
         for (int i = 0; i < tiles.length; i++) {
-            if (i % 4 == 0) {
+            if (i % 3 == 0) {
                 row = new LinearLayout(this);
                 row.setOrientation(LinearLayout.HORIZONTAL);
                 b.tileGrid.addView(row, new LinearLayout.LayoutParams(

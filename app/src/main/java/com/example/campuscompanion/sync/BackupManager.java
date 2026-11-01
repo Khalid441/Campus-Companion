@@ -188,11 +188,18 @@ public final class BackupManager {
         JSONArray topics = new JSONArray();
         for (Topic t : db.topicDao().getAllNow()) {
             topics.put(new JSONObject().put("id", t.id).put("courseId", t.courseId)
-                    .put("title", t.title).put("taught", t.taught).put("taughtAt", t.taughtAt)
+                    .put("title", t.title).put("subject", t.subject).put("taught", t.taught).put("taughtAt", t.taughtAt)
                     .put("revisedCount", t.revisedCount).put("nextRevisionAt", t.nextRevisionAt)
                     .put("remind", t.remind));
         }
         root.put("topics", topics);
+
+        JSONArray examsJson = new JSONArray();
+        for (com.example.campuscompanion.data.local.Exam x : db.examDao().getAllNow()) {
+            examsJson.put(new JSONObject().put("subject", x.subject).put("examDate", x.examDate)
+                    .put("note", x.note));
+        }
+        root.put("exams", examsJson);
 
         JSONArray routine = new JSONArray();
         for (RoutineEntry e : db.routineDao().getAllNow()) {
@@ -238,6 +245,7 @@ public final class BackupManager {
                 db.topicDao().deleteAll();
                 db.attendanceDao().deleteAllCourses();
                 db.routineDao().deleteAll();
+                db.examDao().deleteAll();
                 db.studyDao().deleteAll();
                 db.deadlineDao().deletePersonal();
 
@@ -274,12 +282,23 @@ public final class BackupManager {
                     t.id = o.getInt("id");
                     t.courseId = o.getInt("courseId");
                     t.title = str(o, "title");
+                    t.subject = str(o, "subject");
                     t.taught = o.optBoolean("taught", false);
                     t.taughtAt = o.optLong("taughtAt", 0);
                     t.revisedCount = o.optInt("revisedCount", 0);
                     t.nextRevisionAt = o.optLong("nextRevisionAt", 0);
                     t.remind = o.optBoolean("remind", false);
                     db.topicDao().insert(t);
+                    count[0]++;
+                }
+                a = root.optJSONArray("exams");
+                for (int i = 0; a != null && i < a.length(); i++) {
+                    JSONObject o = a.getJSONObject(i);
+                    com.example.campuscompanion.data.local.Exam x = new com.example.campuscompanion.data.local.Exam();
+                    x.subject = str(o, "subject");
+                    x.examDate = o.getLong("examDate");
+                    x.note = str(o, "note");
+                    db.examDao().insert(x);
                     count[0]++;
                 }
                 a = root.optJSONArray("routine");

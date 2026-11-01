@@ -9,7 +9,8 @@ public class Topic {
     @PrimaryKey(autoGenerate = true)
     public int id;
 
-    public int courseId;
+    public int courseId;          // attendance course, 0 when added by hand without one
+    public String subject;        // typed subject for manual revision items (may be null)
     public String title;
     public boolean taught;        // false = only planned (typed in by the student)
     public long taughtAt;         // start of the day it was taught, epoch millis
@@ -21,6 +22,7 @@ public class Topic {
         Topic t = new Topic();
         t.id = id;
         t.courseId = courseId;
+        t.subject = subject;
         t.title = title;
         t.taught = taught;
         t.taughtAt = taughtAt;

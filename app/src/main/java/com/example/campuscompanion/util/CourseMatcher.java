@@ -25,4 +25,11 @@ public final class CourseMatcher {
         }
         return null;
     }
+
+    /** True when two typed subject names obviously mean the same course. */
+    public static boolean same(String a, String b) {
+        String x = norm(a), y = norm(b);
+        if (x.length() < 3 || y.length() < 3) return false;
+        return x.equals(y) || (x.length() >= 4 && y.contains(x)) || (y.length() >= 4 && x.contains(y));
+    }
 }

@@ -10,7 +10,7 @@ import android.widget.RemoteViews;
 
 import com.example.campuscompanion.R;
 import com.example.campuscompanion.data.local.AppDatabase;
-import com.example.campuscompanion.data.local.AttendanceCourse;
+import com.example.campuscompanion.data.local.Exam;
 import com.example.campuscompanion.data.local.RoutineEntry;
 import com.example.campuscompanion.data.local.Topic;
 import com.example.campuscompanion.ui.DayActivity;
@@ -92,17 +92,17 @@ public class TodayWidget extends AppWidgetProvider {
                 : due.size() + (due.size() == 1 ? " topic" : " topics") + " to revise");
 
         // ---- nearest exam ----
-        AttendanceCourse best = null;
+        Exam best = null;
         int bestDays = Integer.MAX_VALUE;
-        for (AttendanceCourse a : db.attendanceDao().getCoursesNow()) {
-            int d = ExamUtil.daysLeft(a.examDate);
+        for (Exam x : db.examDao().getAllNow()) {
+            int d = ExamUtil.daysLeft(x.examDate);
             if (d >= 0 && d < bestDays) {
-                best = a;
+                best = x;
                 bestDays = d;
             }
         }
         v.setTextViewText(R.id.wTodayExam, best == null ? ""
-                : "Exam: " + best.title() + " • " + ExamUtil.label(bestDays));
+                : "Exam: " + best.subject + " \u2022 " + ExamUtil.label(bestDays));
         return v;
     }
 }

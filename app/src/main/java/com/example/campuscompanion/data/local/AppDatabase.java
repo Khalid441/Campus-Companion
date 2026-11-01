@@ -21,8 +21,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Database(entities = {Deadline.class, RoutineEntry.class, StudySession.class,
-        AttendanceCourse.class, AttendanceRecord.class, Topic.class},
-        version = 5, exportSchema = false)
+        AttendanceCourse.class, AttendanceRecord.class, Topic.class, Exam.class},
+        version = 6, exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
 
     public abstract DeadlineDao deadlineDao();
@@ -30,6 +30,7 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract StudyDao studyDao();
     public abstract AttendanceDao attendanceDao();
     public abstract TopicDao topicDao();
+    public abstract ExamDao examDao();
 
     // Room forbids writes on the main thread, so all writes go through this executor.
     public static final ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -94,6 +95,19 @@ public abstract class AppDatabase extends RoomDatabase {
         }
     };
 
+    /** Version 5 -> 6: manual revision subject, and the separate exams list. Data is kept. */
+    static final Migration MIGRATION_5_6 = new Migration(5, 6) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase db) {
+            db.execSQL("ALTER TABLE `course_topics` ADD COLUMN `subject` TEXT");
+            db.execSQL("CREATE TABLE IF NOT EXISTS `exams` ("
+                    + "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "
+                    + "`subject` TEXT, "
+                    + "`examDate` INTEGER NOT NULL, "
+                    + "`note` TEXT)");
+        }
+    };
+
     private static volatile AppDatabase INSTANCE;
     private static volatile String INSTANCE_UID;
 
@@ -109,14 +123,14 @@ public abstract class AppDatabase extends RoomDatabase {
                                     app,
                                     AppDatabase.class,
                                     "campus_companion_" + uid + ".db")
-                            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                             .build();
 
                     // Redraw the home screen widgets and queue an (optional) cloud backup
                     // whenever the student's data changes
                     db.getInvalidationTracker().addObserver(
                             new InvalidationTracker.Observer("deadlines", "routine", "course_topics",
-                                    "attendance_courses", "attendance_records", "study_sessions") {
+                                    "attendance_courses", "attendance_records", "study_sessions", "exams") {
                                 @Override
                                 public void onInvalidated(@NonNull Set<String> tables) {
                                     NextDeadlineWidget.refresh(app);
