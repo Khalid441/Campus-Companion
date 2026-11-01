@@ -34,6 +34,9 @@ public interface AttendanceDao {
     @Delete
     void deleteRecord(AttendanceRecord r);
 
+    @Query("UPDATE attendance_records SET topic = :topic WHERE id = :id")
+    void setTopic(int id, String topic);
+
     @Query("DELETE FROM attendance_records WHERE courseId = :courseId")
     void deleteRecordsOf(int courseId);
 

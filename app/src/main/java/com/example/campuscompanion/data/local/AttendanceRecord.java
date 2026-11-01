@@ -16,4 +16,5 @@ public class AttendanceRecord {
     public int courseId;
     public long date;     // start of that day (local time), epoch millis
     public int status;    // PRESENT, ABSENT or CANCELLED
+    public String topic;  // what was taught that day (optional)
 }

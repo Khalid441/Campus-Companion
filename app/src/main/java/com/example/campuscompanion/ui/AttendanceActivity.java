@@ -2,6 +2,7 @@ package com.example.campuscompanion.ui;
 
 import android.app.DatePickerDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 
@@ -70,6 +71,7 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
         });
 
         b.fabAdd.setOnClickListener(v -> showCourseDialog(null));
+        b.tvRecapLink.setOnClickListener(v -> startActivity(new Intent(this, RecapActivity.class)));
     }
 
     /** Recalculates every card and the two chips at the top. */
@@ -78,7 +80,7 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
 
         List<AttendanceAdapter.Row> rows = new ArrayList<>();
         for (AttendanceCourse c : courses) {
-            rows.add(new AttendanceAdapter.Row(c, AttendanceStats.forCourse(c, counts)));
+            rows.add(new AttendanceAdapter.Row(c, AttendanceStats.forCourse(c, counts), lastTopic(c)));
         }
         adapter.submitList(rows);
         b.emptyText.setVisibility(courses.isEmpty() ? View.VISIBLE : View.GONE);
@@ -92,43 +94,31 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
         b.tvStreak.setText("🔥 " + streak + " in a row");
     }
 
+    /** The newest class note of a course (records are newest first), or null. */
+    private String lastTopic(AttendanceCourse c) {
+        for (AttendanceRecord r : records) {
+            if (r.courseId == c.id && r.topic != null && !r.topic.trim().isEmpty()) return r.topic;
+        }
+        return null;
+    }
+
     // ---------------------------------------------------------------------
     // Marking classes
     // ---------------------------------------------------------------------
 
-    private static long startOfDay(long millis) {
-        Calendar c = Calendar.getInstance();
-        c.setTimeInMillis(millis);
-        c.set(Calendar.HOUR_OF_DAY, 0);
-        c.set(Calendar.MINUTE, 0);
-        c.set(Calendar.SECOND, 0);
-        c.set(Calendar.MILLISECOND, 0);
-        return c.getTimeInMillis();
-    }
-
     @Override
     public void onMark(AttendanceCourse course, int status) {
-        addRecord(course, status, startOfDay(System.currentTimeMillis()));
+        addRecord(course, status, com.example.campuscompanion.util.DateUtil.startOfDay(System.currentTimeMillis()));
     }
 
-    /** Saves one class, then offers Undo. */
+    /** Saves one class (Present opens the class-note sheet first), then offers Undo. */
     private void addRecord(AttendanceCourse course, int status, long date) {
-        AttendanceRecord r = new AttendanceRecord();
-        r.courseId = course.id;
-        r.date = date;
-        r.status = status;
-
-        AppDatabase.executor.execute(() -> {
-            r.id = (int) dao.insertRecord(r);
-            runOnUiThread(() -> {
-                if (isFinishing() || isDestroyed()) return;
+        AttendanceActions.mark(this, course, status, date, r ->
                 Snackbar.make(b.getRoot(), STATUS_NAMES[status] + " saved for " + course.name
                                 + " (" + DAY.format(new Date(date)) + ")", Snackbar.LENGTH_LONG)
                         .setAnchorView(b.fabAdd)
                         .setAction("Undo", v -> AppDatabase.executor.execute(() -> dao.deleteRecord(r)))
-                        .show();
-            });
-        });
+                        .show());
     }
 
     @Override
@@ -137,7 +127,7 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
         DatePickerDialog dialog = new DatePickerDialog(this, (picker, y, m, d) -> {
             Calendar chosen = Calendar.getInstance();
             chosen.set(y, m, d);
-            long date = startOfDay(chosen.getTimeInMillis());
+            long date = com.example.campuscompanion.util.DateUtil.startOfDay(chosen.getTimeInMillis());
             new MaterialAlertDialogBuilder(this)
                     .setTitle(course.name + "  •  " + DAY.format(new Date(date)))
                     .setItems(STATUS_NAMES, (dlg, which) -> addRecord(course, which, date))
@@ -154,15 +144,27 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
 
     @Override
     public void onOpenMenu(AttendanceCourse course) {
-        String[] items = {"History", "Edit course", "Delete course"};
+        String[] items = {"Topics and notes", "History", "Edit course", "Delete course"};
         new MaterialAlertDialogBuilder(this)
                 .setTitle(course.title())
                 .setItems(items, (d, which) -> {
-                    if (which == 0) showHistory(course);
-                    else if (which == 1) showCourseDialog(course);
+                    if (which == 0) openTopics(course);
+                    else if (which == 1) showHistory(course);
+                    else if (which == 2) showCourseDialog(course);
                     else confirmDelete(course);
                 })
                 .show();
+    }
+
+    @Override
+    public void onOpenTopics(AttendanceCourse course) {
+        openTopics(course);
+    }
+
+    private void openTopics(AttendanceCourse course) {
+        startActivity(new Intent(this, TopicsActivity.class)
+                .putExtra(TopicsActivity.EXTRA_COURSE_ID, course.id)
+                .putExtra(TopicsActivity.EXTRA_COURSE_NAME, course.title()));
     }
 
     private void showHistory(AttendanceCourse course) {
@@ -180,7 +182,8 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
         String[] lines = new String[mine.size()];
         for (int i = 0; i < lines.length; i++) {
             AttendanceRecord r = mine.get(i);
-            lines[i] = DAY.format(new Date(r.date)) + "   •   " + STATUS_NAMES[r.status];
+            lines[i] = DAY.format(new Date(r.date)) + "   \u2022   " + STATUS_NAMES[r.status]
+                    + (r.topic == null || r.topic.isEmpty() ? "" : "\n" + r.topic);
         }
         new MaterialAlertDialogBuilder(this)
                 .setTitle(course.title() + ": tap a class to change it")
@@ -202,6 +205,7 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
                         updated.courseId = r.courseId;
                         updated.date = r.date;
                         updated.status = which;
+                        updated.topic = r.topic;
                         dao.updateRecord(updated);
                     }
                 }))
@@ -217,6 +221,7 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
                 .setPositiveButton("Delete", (d, w) -> AppDatabase.executor.execute(() ->
                         AppDatabase.get(app).runInTransaction(() -> {
                             dao.deleteRecordsOf(course.id);
+                            AppDatabase.get(app).topicDao().deleteOf(course.id);
                             dao.deleteCourse(course);
                         })))
                 .setNegativeButton("Cancel", null)

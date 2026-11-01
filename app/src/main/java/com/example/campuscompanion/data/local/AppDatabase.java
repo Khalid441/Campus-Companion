@@ -19,14 +19,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Database(entities = {Deadline.class, RoutineEntry.class, StudySession.class,
-        AttendanceCourse.class, AttendanceRecord.class},
-        version = 3, exportSchema = false)
+        AttendanceCourse.class, AttendanceRecord.class, Topic.class},
+        version = 4, exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
 
     public abstract DeadlineDao deadlineDao();
     public abstract RoutineDao routineDao();
     public abstract StudyDao studyDao();
     public abstract AttendanceDao attendanceDao();
+    public abstract TopicDao topicDao();
 
     // Room forbids writes on the main thread, so all writes go through this executor.
     public static final ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -66,6 +67,23 @@ public abstract class AppDatabase extends RoomDatabase {
         }
     };
 
+    /** Version 3 -> 4: class notes ("what was taught") and the topic checklist. Data is kept. */
+    static final Migration MIGRATION_3_4 = new Migration(3, 4) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase db) {
+            db.execSQL("ALTER TABLE `attendance_records` ADD COLUMN `topic` TEXT");
+            db.execSQL("CREATE TABLE IF NOT EXISTS `course_topics` ("
+                    + "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "
+                    + "`courseId` INTEGER NOT NULL, "
+                    + "`title` TEXT, "
+                    + "`taught` INTEGER NOT NULL, "
+                    + "`taughtAt` INTEGER NOT NULL, "
+                    + "`revisedCount` INTEGER NOT NULL, "
+                    + "`nextRevisionAt` INTEGER NOT NULL, "
+                    + "`remind` INTEGER NOT NULL)");
+        }
+    };
+
     private static volatile AppDatabase INSTANCE;
     private static volatile String INSTANCE_UID;
 
@@ -81,7 +99,7 @@ public abstract class AppDatabase extends RoomDatabase {
                                     app,
                                     AppDatabase.class,
                                     "campus_companion_" + uid + ".db")
-                            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                             .build();
 
                     // Redraw the home screen widget whenever deadlines or the routine change

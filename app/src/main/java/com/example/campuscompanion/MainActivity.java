@@ -4,25 +4,22 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.content.res.Configuration;
-import android.database.Cursor;
+import android.content.res.ColorStateList;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.LocationManager;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.Settings;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CompoundButton;
+import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.content.ContextCompat;
 
 import com.example.campuscompanion.auth.UserSession;
@@ -30,31 +27,40 @@ import com.example.campuscompanion.data.local.AppDatabase;
 import com.example.campuscompanion.data.local.AttendanceCourse;
 import com.example.campuscompanion.data.local.AttendanceDao;
 import com.example.campuscompanion.data.local.AttendanceRecord;
+import com.example.campuscompanion.data.local.Deadline;
+import com.example.campuscompanion.data.local.RoutineEntry;
 import com.example.campuscompanion.data.local.StudySession;
+import com.example.campuscompanion.data.local.Topic;
 import com.example.campuscompanion.data.remote.WeatherClient;
 import com.example.campuscompanion.data.remote.WeatherResponse;
 import com.example.campuscompanion.databinding.ActivityMainBinding;
+import com.example.campuscompanion.databinding.ItemTileBinding;
 import com.example.campuscompanion.model.Notice;
 import com.example.campuscompanion.notification.NotificationHelper;
-import com.example.campuscompanion.provider.DeadlineProvider;
 import com.example.campuscompanion.reminder.ReminderScheduler;
+import com.example.campuscompanion.reminder.RevisionScheduler;
 import com.example.campuscompanion.reminder.StudyReminderScheduler;
-import com.example.campuscompanion.service.NextDeadlineService;
 import com.example.campuscompanion.sync.NoticeManager;
 import com.example.campuscompanion.sync.SyncManager;
 import com.example.campuscompanion.ui.AddDeadlineActivity;
 import com.example.campuscompanion.ui.AttendanceActivity;
 import com.example.campuscompanion.ui.CalendarActivity;
+import com.example.campuscompanion.ui.DayActivity;
 import com.example.campuscompanion.ui.DeadlinesActivity;
 import com.example.campuscompanion.ui.LoginActivity;
 import com.example.campuscompanion.ui.NoticesActivity;
+import com.example.campuscompanion.ui.RecapActivity;
+import com.example.campuscompanion.ui.RevisionActivity;
 import com.example.campuscompanion.ui.RoutineActivity;
+import com.example.campuscompanion.ui.SettingsActivity;
 import com.example.campuscompanion.ui.StatsActivity;
 import com.example.campuscompanion.ui.StudyActivity;
 import com.example.campuscompanion.ui.TimetableActivity;
 import com.example.campuscompanion.util.AttendanceMath;
 import com.example.campuscompanion.util.AttendanceStats;
 import com.example.campuscompanion.util.BottomNav;
+import com.example.campuscompanion.util.DateUtil;
+import com.example.campuscompanion.util.RevisionPlan;
 import com.example.campuscompanion.util.TimeUtil;
 import com.example.campuscompanion.widget.NextDeadlineWidget;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -62,6 +68,8 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
 import com.google.android.gms.tasks.CancellationTokenSource;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -76,11 +84,12 @@ import retrofit2.Response;
 public class MainActivity extends AppCompatActivity {
 
     private ActivityMainBinding b;
-    private SharedPreferences prefs;
     private FusedLocationProviderClient fusedClient;
     private Call<WeatherResponse> currentCall;
     private List<AttendanceCourse> homeCourses = new ArrayList<>();
     private List<AttendanceRecord> homeRecords = new ArrayList<>();
+    private List<RoutineEntry> todayClasses = new ArrayList<>();
+    private Notice shownNotice;
 
     private final ActivityResultLauncher<String> notificationPermission =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> { });
@@ -94,24 +103,6 @@ public class MainActivity extends AppCompatActivity {
                     loadWeatherDefaultCity();
                 }
             });
-
-    private final CompoundButton.OnCheckedChangeListener trackerListener = (button, on) -> {
-        if (on) {
-            Intent i = new Intent(this, NextDeadlineService.class)
-                    .setAction(NextDeadlineService.ACTION_START);
-            ContextCompat.startForegroundService(this, i);
-        } else {
-            stopService(new Intent(this, NextDeadlineService.class));
-        }
-        prefs.edit().putBoolean(NextDeadlineService.KEY_TRACKER_ON, on).apply();
-    };
-
-    private final CompoundButton.OnCheckedChangeListener darkListener = (button, on) -> {
-        int mode = on ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO;
-        getSharedPreferences(CampusApp.PREFS, Context.MODE_PRIVATE)
-                .edit().putInt(CampusApp.KEY_NIGHT_MODE, mode).apply();
-        AppCompatDelegate.setDefaultNightMode(mode); // recreates the screen with the new theme
-    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -127,7 +118,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(b.getRoot());
         BottomNav.attach(this, R.id.nav_home);
 
-        prefs = getSharedPreferences(NextDeadlineService.PREFS, Context.MODE_PRIVATE);
         NotificationHelper.createChannels(this);
         fusedClient = LocationServices.getFusedLocationProviderClient(this);
 
@@ -159,29 +149,21 @@ public class MainActivity extends AppCompatActivity {
         NoticeManager.latest.observe(this, this::renderNotice);
         b.cardNotice.setOnClickListener(v -> startActivity(new Intent(this, NoticesActivity.class)));
 
-        b.btnDeadlines.setOnClickListener(v -> startActivity(new Intent(this, DeadlinesActivity.class)));
-        b.btnRoutine.setOnClickListener(v -> startActivity(new Intent(this, RoutineActivity.class)));
+        b.btnSettings.setOnClickListener(v -> startActivity(new Intent(this, SettingsActivity.class)));
+        b.cardGlance.setOnClickListener(v -> startActivity(new Intent(this, DayActivity.class)));
+        b.btnNoticeAck.setOnClickListener(v -> ackNotice());
 
         b.btnPost.setVisibility(UserSession.isCr(this) ? View.VISIBLE : View.GONE);
         b.btnPost.setOnClickListener(v -> startActivity(
                 new Intent(this, AddDeadlineActivity.class)
                         .putExtra(AddDeadlineActivity.EXTRA_POST_TO_SECTION, true)));
 
-        b.btnExactAlarm.setOnClickListener(v -> {
-            if (Build.VERSION.SDK_INT >= 31) {
-                startActivity(new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
-                        Uri.parse("package:" + getPackageName())));
-            }
-        });
-        b.btnTimetable.setOnClickListener(v -> startActivity(new Intent(this, TimetableActivity.class)));
-        b.btnStudy.setOnClickListener(v -> startActivity(new Intent(this, StudyActivity.class)));
         b.cardStudy.setOnClickListener(v -> startActivity(new Intent(this, StudyActivity.class)));
-        b.btnStats.setOnClickListener(v -> startActivity(new Intent(this, StatsActivity.class)));
-        b.btnCalendar.setOnClickListener(v -> startActivity(new Intent(this, CalendarActivity.class)));
-        b.btnLogout.setOnClickListener(v -> logout());
+        b.tvRevise.setOnClickListener(v -> startActivity(new Intent(this, RevisionActivity.class)));
         b.tvWeather.setOnClickListener(v -> {
             if (hasLocationPermission()) loadWeather(); else loadWeatherDefaultCity();
         });
+        buildTiles();
 
         // Re-arm this account's reminders (alarms are cancelled on logout)
         Context appCtx = getApplicationContext();
@@ -195,10 +177,12 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        showTodaysClasses();
+        RevisionScheduler.ensure(this);
+
+        showGlance();
         showTodaysStudy();
+        showRevisionCount();
         showAttendance();
-        arrangeCardsByTime();
         if (savedInstanceState == null) animateCards();
     }
 
@@ -208,21 +192,8 @@ public class MainActivity extends AppCompatActivity {
         if (b == null) return;
 
         renderNotice(NoticeManager.latest.getValue());
+        renderNextClass();
         NextDeadlineWidget.refresh(this);
-
-        b.swTracker.setOnCheckedChangeListener(null);
-        b.swTracker.setChecked(prefs.getBoolean(NextDeadlineService.KEY_TRACKER_ON, false));
-        b.swTracker.setOnCheckedChangeListener(trackerListener);
-
-        boolean isDark = (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)
-                == Configuration.UI_MODE_NIGHT_YES;
-        b.swDark.setOnCheckedChangeListener(null);
-        b.swDark.setChecked(isDark);
-        b.swDark.setOnCheckedChangeListener(darkListener);
-
-        b.btnExactAlarm.setVisibility(ReminderScheduler.canScheduleExact(this) ? View.GONE : View.VISIBLE);
-
-        showProviderCount();
 
         // Only fetch here if permission is already granted; otherwise the
         // permission dialog result (or the fallback) handles it.
@@ -239,13 +210,37 @@ public class MainActivity extends AppCompatActivity {
 
     private void renderNotice(Notice n) {
         if (b == null) return;
+        shownNotice = n;
         if (n == null) {
             b.tvNotice.setText("No notices yet");
+            b.btnNoticeAck.setVisibility(View.GONE);
             return;
         }
         boolean unread = n.createdAt > NoticeManager.lastSeen(this);
         String who = (n.author == null || n.author.isEmpty()) ? "CR" : n.author;
         b.tvNotice.setText((unread ? "\uD83D\uDD34 " : "") + n.message + "\n\u2014 " + who);
+
+        String uid = FirebaseAuth.getInstance().getUid();
+        boolean acked = uid != null && n.ackedBy.contains(uid);
+        b.btnNoticeAck.setVisibility(uid == null || n.id == null ? View.GONE : View.VISIBLE);
+        b.btnNoticeAck.setText((acked ? "\u2713 Got it" : "Got it")
+                + (n.ackedBy.isEmpty() ? "" : "  \u2022  " + n.ackedBy.size()));
+    }
+
+    /** "Got it" on the Home card: same as in the notice list. */
+    private void ackNotice() {
+        Notice n = shownNotice;
+        String uid = FirebaseAuth.getInstance().getUid();
+        String section = UserSession.section(this);
+        if (n == null || n.id == null || uid == null || section == null) return;
+        boolean acked = n.ackedBy.contains(uid);
+        Context app = getApplicationContext();
+        FirebaseFirestore.getInstance()
+                .collection("sections").document(section)
+                .collection("notices").document(n.id)
+                .update("ackedBy", acked ? FieldValue.arrayRemove(uid) : FieldValue.arrayUnion(uid))
+                .addOnFailureListener(e -> Toast.makeText(app,
+                        "Could not save: " + e.getMessage(), Toast.LENGTH_LONG).show());
     }
 
     // ---------------------------------------------------------------------
@@ -301,7 +296,7 @@ public class MainActivity extends AppCompatActivity {
         // Only the newest request may update the card
         if (currentCall != null) currentCall.cancel();
         currentCall = call;
-        b.tvWeather.setText("Weather in " + label + ": loading...");
+        b.tvWeather.setText("Weather in " + label + "...");
 
         call.enqueue(new Callback<WeatherResponse>() {
             @Override
@@ -315,11 +310,11 @@ public class MainActivity extends AppCompatActivity {
                     if (!day && body.current.weatherCode == 0) desc = "Clear night";
 
                     b.tvWeather.setText(String.format(Locale.getDefault(),
-                            "%s  %s\n%.0f\u00B0C, %s\nWind %.0f km/h",
-                            weatherEmoji(body.current.weatherCode, day), label,
+                            "%s  %.0f\u00B0C  \u2022  %s  \u2022  %s",
+                            weatherEmoji(body.current.weatherCode, day),
                             body.current.temperature,
                             desc,
-                            body.current.windSpeed));
+                            label));
                 } else {
                     android.util.Log.e("WEATHER", "HTTP " + response.code() + " " + call.request().url());
                     b.tvWeather.setText("Weather unavailable right now");
@@ -334,9 +329,9 @@ public class MainActivity extends AppCompatActivity {
                 String msg;
                 if (t instanceof java.net.UnknownHostException
                         || t instanceof java.net.ConnectException) {
-                    msg = "\u2601\uFE0F No internet connection\nConnect to Wi-Fi or mobile data to see the weather.";
+                    msg = "\u2601\uFE0F No internet, weather unavailable";
                 } else if (t instanceof java.net.SocketTimeoutException) {
-                    msg = "\u23F3 Weather is taking too long\nCheck your connection and try again.";
+                    msg = "\u23F3 Weather is slow, tap to retry";
                 } else {
                     msg = "Weather unavailable right now";
                 }
@@ -381,24 +376,46 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // ---------------------------------------------------------------------
-    // Today's classes (university) and today's study plan (personal)
+    // Today at a glance, study plan, revision count
     // ---------------------------------------------------------------------
 
-    private void showTodaysClasses() {
+    private void showGlance() {
+        AppDatabase db = AppDatabase.get(this);
         int today = Calendar.getInstance().get(Calendar.DAY_OF_WEEK);
-        AppDatabase.get(this).routineDao().getForDay(today).observe(this, list -> {
-            if (list.isEmpty()) {
-                b.tvToday.setText("No classes today");
-                return;
-            }
-            StringBuilder sb = new StringBuilder();
-            for (com.example.campuscompanion.data.local.RoutineEntry e : list) {
-                if (sb.length() > 0) sb.append("\n");
-                sb.append(TimeUtil.fmt(e.startMinutes)).append("  ").append(e.course);
-                if (e.room != null && !e.room.isEmpty()) sb.append("  (").append(e.room).append(")");
-            }
-            b.tvToday.setText(sb);
+        db.routineDao().getForDay(today).observe(this, list -> {
+            todayClasses = list;
+            renderNextClass();
         });
+        db.deadlineDao().getNextPending().observe(this, d -> renderNextDeadline(d));
+    }
+
+    private void renderNextClass() {
+        if (b == null) return;
+        if (todayClasses.isEmpty()) {
+            b.tvNextClass.setText("No classes today");
+            return;
+        }
+        int nowMin = DateUtil.minutesOfDay(System.currentTimeMillis());
+        for (RoutineEntry e : todayClasses) {
+            if (e.endMinutes <= nowMin) continue;
+            boolean running = e.startMinutes <= nowMin;
+            String room = (e.room == null || e.room.isEmpty()) ? "" : "  (" + e.room + ")";
+            b.tvNextClass.setText((running ? "Now: " : "Next class: ")
+                    + TimeUtil.fmt(e.startMinutes) + "  " + e.course + room);
+            return;
+        }
+        b.tvNextClass.setText("No more classes today");
+    }
+
+    private void renderNextDeadline(Deadline d) {
+        if (b == null) return;
+        if (d == null) {
+            b.tvNextDeadline.setText("No pending deadlines");
+            return;
+        }
+        boolean overdue = d.dueAt < System.currentTimeMillis();
+        b.tvNextDeadline.setText((overdue ? "Overdue: " : "Next deadline: ") + d.title
+                + "  \u2022  " + TimeUtil.friendly(d.dueAt));
     }
 
     private void showTodaysStudy() {
@@ -414,6 +431,16 @@ public class MainActivity extends AppCompatActivity {
             b.tvStudyToday.setText(sb.length() == 0
                     ? "Nothing planned. Tap to add a study session."
                     : sb.toString());
+        });
+    }
+
+    private void showRevisionCount() {
+        AppDatabase.get(this).topicDao().getAll().observe(this, list -> {
+            long now = System.currentTimeMillis();
+            int due = 0;
+            for (Topic t : list) if (RevisionPlan.isDue(t, now)) due++;
+            b.tvRevise.setText(due == 0 ? "No revision due today  \u203A"
+                    : due + (due == 1 ? " topic" : " topics") + " to revise  \u203A");
         });
     }
 
@@ -470,17 +497,6 @@ public class MainActivity extends AppCompatActivity {
         b.tvAttendanceHome.setText(sb);
     }
 
-    /** In the evening the study plan moves above today's classes. */
-    private void arrangeCardsByTime() {
-        int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
-        ViewGroup parent = (ViewGroup) b.cardClasses.getParent();
-        if (hour >= 17 && b.cardStudy.getParent() == parent) {
-            int classesIndex = parent.indexOfChild(b.cardClasses);
-            parent.removeView(b.cardStudy);
-            parent.addView(b.cardStudy, classesIndex);
-        }
-    }
-
     /** Cards slide up and fade in, one after another. */
     private void animateCards() {
         ViewGroup parent = b.homeContainer;
@@ -493,50 +509,45 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /** ContentProvider demo: count deadlines through a content:// URI. */
-    private void showProviderCount() {
-        AppDatabase.executor.execute(() -> {
-            int count = 0;
-            try (Cursor c = getContentResolver().query(
-                    DeadlineProvider.CONTENT_URI, new String[]{"id"}, null, null, null)) {
-                if (c != null) count = c.getCount();
-            }
-            final int n = count;
-            runOnUiThread(() -> {
-                if (!isFinishing() && !isDestroyed()) {
-                    b.tvProviderCount.setText("Deadlines read via ContentProvider: " + n);
-                }
-            });
-        });
-    }
-
-    private void logout() {
-        // Cancel this account's reminders before switching (must run before SyncManager.stop)
-        Context app = getApplicationContext();
-        AppDatabase.executor.execute(() -> {
-            for (com.example.campuscompanion.data.local.Deadline d
-                    : AppDatabase.get(app).deadlineDao().getPending()) {
-                ReminderScheduler.cancel(app, d.id);
-            }
-            for (StudySession s : AppDatabase.get(app).studyDao().getAllNow()) {
-                StudyReminderScheduler.cancel(app, s.id);
-            }
-        });
-
-        stopService(new Intent(this, NextDeadlineService.class));
-        prefs.edit().putBoolean(NextDeadlineService.KEY_TRACKER_ON, false).apply();
-        SyncManager.stop(this);
-        NoticeManager.stop();
-        FirebaseAuth.getInstance().signOut();
-        NextDeadlineWidget.refresh(this);   // widget switches to "Sign in..."
-        UserSession.clear(this);
-        goToLogin();
-    }
-
     private void goToLogin() {
         Intent i = new Intent(this, LoginActivity.class);
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(i);
         finish();
+    }
+
+    // ---------------------------------------------------------------------
+    // Quick tiles
+    // ---------------------------------------------------------------------
+
+    private void buildTiles() {
+        Object[][] tiles = {
+                {"My day", R.drawable.ic_tile_day, R.color.home_classes, DayActivity.class},
+                {"Deadlines", R.drawable.ic_nav_deadlines, R.color.home_deadline, DeadlinesActivity.class},
+                {"Routine", R.drawable.ic_tile_routine, R.color.home_routine, RoutineActivity.class},
+                {"Timetable", R.drawable.ic_tile_timetable, R.color.home_timetable, TimetableActivity.class},
+                {"Calendar", R.drawable.ic_tile_calendar, R.color.home_calendar, CalendarActivity.class},
+                {"Statistics", R.drawable.ic_tile_stats, R.color.home_stats, StatsActivity.class},
+                {"Revision", R.drawable.ic_tile_revision, R.color.study_teal, RevisionActivity.class},
+                {"Recap", R.drawable.ic_tile_recap, R.color.home_attendance, RecapActivity.class},
+        };
+        b.tileGrid.removeAllViews();
+        LinearLayout row = null;
+        for (int i = 0; i < tiles.length; i++) {
+            if (i % 4 == 0) {
+                row = new LinearLayout(this);
+                row.setOrientation(LinearLayout.HORIZONTAL);
+                b.tileGrid.addView(row, new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            }
+            ItemTileBinding t = ItemTileBinding.inflate(LayoutInflater.from(this), row, false);
+            t.tvTile.setText((String) tiles[i][0]);
+            t.ivTile.setImageResource((Integer) tiles[i][1]);
+            t.ivTile.setImageTintList(ColorStateList.valueOf(
+                    ContextCompat.getColor(this, (Integer) tiles[i][2])));
+            final Class<?> target = (Class<?>) tiles[i][3];
+            t.tile.setOnClickListener(v -> startActivity(new Intent(this, target)));
+            row.addView(t.getRoot());
+        }
     }
 }

@@ -59,16 +59,18 @@
                     android:layout_height="wrap_content"
                     android:indeterminate="false"
                     android:max="100"
-                    app:indicatorSize="64dp"
+                    app:indicatorInset="4dp"
+                    app:indicatorSize="68dp"
                     app:trackThickness="6dp" />
 
                 <TextView
                     android:id="@+id/tvPercent"
-                    android:layout_width="64dp"
-                    android:layout_height="64dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
                     android:gravity="center"
+                    android:maxLines="1"
                     android:textColor="?attr/colorOnSurface"
-                    android:textSize="15sp"
+                    android:textSize="14sp"
                     android:textStyle="bold" />
             </FrameLayout>
         </LinearLayout>
@@ -81,6 +83,37 @@
             android:lineSpacingExtra="2dp"
             android:textColor="?attr/colorOnSurface"
             android:textSize="14sp" />
+
+        <LinearLayout
+            android:id="@+id/boxLastTopic"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_note_box"
+            android:clickable="true"
+            android:focusable="true"
+            android:orientation="vertical"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="8dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="LAST TAUGHT"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvLastTopic"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:maxLines="2"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="13sp" />
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"

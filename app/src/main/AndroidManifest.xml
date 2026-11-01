@@ -77,6 +77,11 @@
         <activity android:name=".ui.StudyActivity" android:exported="false" />
         <activity android:name=".ui.AddStudyActivity" android:exported="false" />
         <activity android:name=".ui.AttendanceActivity" android:exported="false" />
+        <activity android:name=".ui.TopicsActivity" android:exported="false" />
+        <activity android:name=".ui.RevisionActivity" android:exported="false" />
+        <activity android:name=".ui.DayActivity" android:exported="false" />
+        <activity android:name=".ui.RecapActivity" android:exported="false" />
+        <activity android:name=".ui.SettingsActivity" android:exported="false" />
 
         <receiver android:name=".receiver.ReminderReceiver" android:exported="false" />
         <receiver android:name=".receiver.StudyReminderReceiver" android:exported="false" />

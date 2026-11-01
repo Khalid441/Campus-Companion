@@ -23,10 +23,12 @@ public class AttendanceAdapter extends ListAdapter<AttendanceAdapter.Row, Attend
     public static class Row {
         public final AttendanceCourse course;
         public final AttendanceMath.Result stats;
+        public final String lastTopic;   // newest class note, may be null
 
-        public Row(AttendanceCourse course, AttendanceMath.Result stats) {
+        public Row(AttendanceCourse course, AttendanceMath.Result stats, String lastTopic) {
             this.course = course;
             this.stats = stats;
+            this.lastTopic = lastTopic;
         }
     }
 
@@ -34,6 +36,7 @@ public class AttendanceAdapter extends ListAdapter<AttendanceAdapter.Row, Attend
         void onMark(AttendanceCourse course, int status);
         void onPickDate(AttendanceCourse course);
         void onOpenMenu(AttendanceCourse course);
+        void onOpenTopics(AttendanceCourse course);
     }
 
     private static final DiffUtil.ItemCallback<Row> DIFF = new DiffUtil.ItemCallback<Row>() {
@@ -48,6 +51,7 @@ public class AttendanceAdapter extends ListAdapter<AttendanceAdapter.Row, Attend
                     && Objects.equals(a.course.code, b.course.code)
                     && a.course.minPercent == b.course.minPercent
                     && a.course.totalPlanned == b.course.totalPlanned
+                    && Objects.equals(a.lastTopic, b.lastTopic)
                     && a.stats.present == b.stats.present
                     && a.stats.absent == b.stats.absent
                     && a.stats.cancelled == b.stats.cancelled;
@@ -90,6 +94,10 @@ public class AttendanceAdapter extends ListAdapter<AttendanceAdapter.Row, Attend
                     + "  •  Cancelled " + s.cancelled + "\nMinimum " + c.minPercent + "%"
                     + (c.totalPlanned > 0 ? "  •  " + c.totalPlanned + " classes planned" : ""));
             b.tvAdvice.setText(s.advice);
+
+            boolean hasTopic = row.lastTopic != null && !row.lastTopic.isEmpty();
+            b.tvLastTopic.setText(hasTopic ? row.lastTopic : "No class note yet. Tap Present to add one.");
+            b.boxLastTopic.setOnClickListener(v -> listener.onOpenTopics(c));
 
             int colorRes = s.level == AttendanceMath.LOW ? R.color.att_low
                     : s.level == AttendanceMath.CLOSE ? R.color.att_close : R.color.att_safe;

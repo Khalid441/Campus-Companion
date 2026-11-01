@@ -17,6 +17,7 @@ import androidx.core.content.ContextCompat;
 import com.example.campuscompanion.data.local.Deadline;
 import com.example.campuscompanion.data.local.StudySession;
 import com.example.campuscompanion.ui.DeadlinesActivity;
+import com.example.campuscompanion.ui.RevisionActivity;
 import com.example.campuscompanion.ui.StudyActivity;
 
 import java.text.SimpleDateFormat;
@@ -28,6 +29,7 @@ public final class NotificationHelper {
     public static final String CHANNEL_REMINDERS = "deadline_reminders";
     public static final String CHANNEL_TRACKER = "deadline_tracker";
     public static final String CHANNEL_STUDY = "study_reminders";
+    public static final String CHANNEL_REVISION = "revision_reminders";
 
     private NotificationHelper() {}
 
@@ -53,6 +55,11 @@ public final class NotificationHelper {
                 CHANNEL_STUDY, "Study reminders", NotificationManager.IMPORTANCE_HIGH);
         study.setDescription("Reminders for your own study sessions (not university classes)");
 
+        NotificationChannel revision = new NotificationChannel(
+                CHANNEL_REVISION, "Revision reminders", NotificationManager.IMPORTANCE_DEFAULT);
+        revision.setDescription("Daily reminder to revise topics taught 1, 3 and 7 days ago");
+
+        nm.createNotificationChannel(revision);
         nm.createNotificationChannel(reminders);
         nm.createNotificationChannel(tracker);
         nm.createNotificationChannel(study);
@@ -124,5 +131,31 @@ public final class NotificationHelper {
                 .setContentIntent(pi);
 
         NotificationManagerCompat.from(c).notify(60000 + s.id, b.build());
+    }
+
+    /** Daily "N topics to revise" notification. */
+    @SuppressLint("MissingPermission") // guarded by canNotify()
+    public static void showRevisionReminder(Context c, int count, String firstTitle) {
+        createChannels(c);
+        if (!canNotify(c) || count <= 0) return;
+
+        Intent open = new Intent(c, RevisionActivity.class);
+        open.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        PendingIntent pi = PendingIntent.getActivity(c, 70000, open,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+        String text = count == 1 ? firstTitle : firstTitle + " and " + (count - 1) + " more";
+        NotificationCompat.Builder b = new NotificationCompat.Builder(c, CHANNEL_REVISION)
+                .setSmallIcon(android.R.drawable.ic_menu_agenda)
+                .setColor(0xFF00897B)
+                .setContentTitle(count + (count == 1 ? " topic" : " topics") + " to revise today")
+                .setContentText(text)
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(text))
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setCategory(NotificationCompat.CATEGORY_REMINDER)
+                .setAutoCancel(true)
+                .setContentIntent(pi);
+
+        NotificationManagerCompat.from(c).notify(70000, b.build());
     }
 }

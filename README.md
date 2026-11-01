@@ -78,7 +78,12 @@ This project was built for the Android part of the course plan (Weeks 8–13). T
 | 📖 **My study plan** | Personal study sessions with subject, topic, days of the week, time and reminder. Sessions can be edited, switched on or off, or deleted. Kept separate from university classes (teal colour) so they never get mixed up. |
 | ✅ **Attendance tracker** | The student adds their own courses (name, optional code, **own minimum %**, optional total classes) and marks each class **Present / Absent / Cancelled** with one tap, today or on another date. Each course shows a coloured progress ring, counts, and plain advice such as *"You can miss 3 more classes and still reach 75%"* or *"Attend the next 4 classes in a row"*. History can be edited, and there is an overall % and a streak. Saved on the phone (Room), works offline. |
 | 🧭 **Bottom navigation** | Home, Notices, Deadlines, Attendance and Study are one tap apart. |
-| 🌅 **Smart home screen** | Cards slide in, the study plan moves above today's classes in the evening, and an attendance card shows the lowest course. |
+| 🌅 **Shorter home screen** | A *Today at a glance* card (weather, next class, next deadline), a compact notice with **Got it**, the study plan with *"N topics to revise"*, the attendance card and a grid of quick tiles. Settings and profile moved to their own screen. |
+| 📝 **Class notes** | After tapping **Present**, a sheet asks *"What was taught today?"*. The note is saved with that class and shown as **Last taught** on the course card. |
+| ✅ **Topic checklist** | Every course keeps a list of topics (planned, taught, revised 0 to 3 times). Topics from class notes are added automatically. |
+| 🔁 **Spaced revision** | Taught topics come back **1, 3 and 7 days** later on the Revision screen, with an optional daily 7 PM notification. |
+| 🗓️ **My day** | One timeline of the day's classes, study sessions, deadlines and revision, with Present / Absent buttons on the class cards. |
+| 📊 **Weekly recap** | Last 7 days: classes attended, topics covered, revision still due, deadlines done. |
 | 📊 **Deadline statistics** | Completion donut chart, a bar chart of deadlines due in the next 7 days, and a priority breakdown. |
 | 📅 **Deadline calendar** | A month calendar marking days that have deadlines. |
 | 📌 **Persistent tracker** | Optional foreground notification that always shows the next unfinished deadline. |
@@ -257,7 +262,8 @@ app/src/main/java/com/example/campuscompanion/
 | `routine` | id, course, room, teacher, dayOfWeek, startMinutes, endMinutes |
 | `study_sessions` | id, subject, topic, daysMask, startMinutes, endMinutes, reminderMinutes, enabled |
 | `attendance_courses` | id, name, code, minPercent, totalPlanned, createdAt |
-| `attendance_records` | id, courseId, date, status (0 present, 1 absent, 2 cancelled) |
+| `attendance_records` | id, courseId, date, status (0 present, 1 absent, 2 cancelled), topic (class note) |
+| `course_topics` | id, courseId, title, taught, taughtAt, revisedCount, nextRevisionAt, remind |
 
 **Cloud (Firestore)**
 

@@ -26,4 +26,15 @@ public final class TimeUtil {
         int h12 = h % 12 == 0 ? 12 : h % 12;
         return String.format(Locale.getDefault(), "%d:%02d %s", h12, m, ampm);
     }
+
+    /** "Today 4:00 PM", "Tomorrow 9:00 AM" or "Sat, 07 Nov  9:00 AM". */
+    public static String friendly(long millis) {
+        long now = System.currentTimeMillis();
+        int mins = DateUtil.minutesOfDay(millis);
+        if (DateUtil.sameDay(millis, now)) return "Today " + fmt(mins);
+        if (DateUtil.sameDay(millis, DateUtil.addDays(now, 1))) return "Tomorrow " + fmt(mins);
+        if (DateUtil.sameDay(millis, DateUtil.addDays(now, -1))) return "Yesterday " + fmt(mins);
+        return new java.text.SimpleDateFormat("EEE, dd MMM", Locale.getDefault())
+                .format(new java.util.Date(millis)) + "  " + fmt(mins);
+    }
 }

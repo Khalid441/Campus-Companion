@@ -12,47 +12,122 @@
         android:orientation="vertical"
         android:padding="20dp">
 
-        <!-- Header -->
-        <TextView
-            android:id="@+id/tvGreeting"
+        <!-- Header: greeting + settings -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="?attr/colorOnSurface"
-            android:textSize="26sp"
-            android:textStyle="bold" />
+            android:gravity="top"
+            android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/tvSection"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:background="@drawable/bg_chip"
-            android:paddingHorizontal="12dp"
-            android:paddingVertical="4dp"
-            android:textColor="?attr/colorOnPrimaryContainer"
-            android:textSize="13sp" />
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
 
-        <!-- Weather card -->
+                <TextView
+                    android:id="@+id/tvGreeting"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="26sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvSection"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:background="@drawable/bg_chip"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="4dp"
+                    android:textColor="?attr/colorOnPrimaryContainer"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+            <ImageButton
+                android:id="@+id/btnSettings"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Settings"
+                android:src="@drawable/ic_settings"
+                app:tint="?attr/colorOnSurfaceVariant" />
+        </LinearLayout>
+
+        <!-- Today at a glance -->
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardGlance"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="16dp"
+            android:clickable="true"
+            android:focusable="true"
             app:cardBackgroundColor="?attr/colorPrimaryContainer"
             app:cardCornerRadius="24dp"
             app:cardElevation="0dp"
             app:strokeWidth="0dp">
 
-            <TextView
-                android:id="@+id/tvWeather"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:lineSpacingExtra="4dp"
-                android:padding="20dp"
-                android:textColor="?attr/colorOnPrimaryContainer"
-                android:textSize="20sp" />
+                android:orientation="vertical"
+                android:padding="18dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Today at a glance"
+                        android:textColor="?attr/colorOnPrimaryContainer"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="My day  &#8250;"
+                        android:textColor="?attr/colorOnPrimaryContainer"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvWeather"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:textColor="?attr/colorOnPrimaryContainer"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvNextClass"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:lineSpacingExtra="2dp"
+                    android:textColor="?attr/colorOnPrimaryContainer"
+                    android:textSize="15sp" />
+
+                <TextView
+                    android:id="@+id/tvNextDeadline"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:lineSpacingExtra="2dp"
+                    android:textColor="?attr/colorOnPrimaryContainer"
+                    android:textSize="15sp" />
+            </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Latest notice from the CR -->
+        <!-- Latest notice from the CR (compact) -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardNotice"
             android:layout_width="match_parent"
@@ -70,7 +145,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="20dp">
+                android:padding="16dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -82,69 +157,38 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="&#128226; Latest notice"
+                        android:text="Latest notice"
                         android:textColor="@color/home_notice"
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/btnNoticeAck"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="View all  &#8250;"
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="6dp"
+                        android:text="Got it"
                         android:textColor="@color/home_notice"
                         android:textSize="13sp"
-                        android:textStyle="bold" />
+                        android:textStyle="bold"
+                        android:visibility="gone" />
                 </LinearLayout>
 
                 <TextView
                     android:id="@+id/tvNotice"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="4dp"
+                    android:ellipsize="end"
                     android:lineSpacingExtra="3dp"
+                    android:maxLines="3"
                     android:textColor="?attr/colorOnSurface"
-                    android:textSize="16sp" />
+                    android:textSize="15sp" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- University classes (purple world) -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardClasses"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            app:cardBackgroundColor="?attr/colorSurfaceVariant"
-            app:cardCornerRadius="24dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/home_classes"
-            app:strokeWidth="1.5dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="20dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="&#127979; Today's classes"
-                    android:textColor="@color/home_classes"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tvToday"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:lineSpacingExtra="4dp"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="17sp" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Personal study plan (teal world) -->
+        <!-- Personal study plan (teal world) + revision -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardStudy"
             android:layout_width="match_parent"
@@ -162,12 +206,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="20dp">
+                android:padding="16dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="&#128214; Today's study plan"
+                    android:text="Today's study plan"
                     android:textColor="@color/study_teal"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -176,10 +220,22 @@
                     android:id="@+id/tvStudyToday"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:lineSpacingExtra="4dp"
+                    android:layout_marginTop="6dp"
+                    android:lineSpacingExtra="3dp"
                     android:textColor="?attr/colorOnSurface"
-                    android:textSize="17sp" />
+                    android:textSize="15sp" />
+
+                <TextView
+                    android:id="@+id/tvRevise"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_chip"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="6dp"
+                    android:textColor="?attr/colorOnPrimaryContainer"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -201,7 +257,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="20dp">
+                android:padding="16dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -213,7 +269,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="&#9989; Attendance"
+                        android:text="Attendance"
                         android:textColor="@color/home_attendance"
                         android:textSize="14sp"
                         android:textStyle="bold" />
@@ -231,89 +287,21 @@
                     android:id="@+id/tvAttendanceHome"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:lineSpacingExtra="4dp"
+                    android:layout_marginTop="6dp"
+                    android:lineSpacingExtra="3dp"
                     android:textColor="?attr/colorOnSurface"
-                    android:textSize="16sp" />
+                    android:textSize="15sp" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Action buttons side by side -->
+        <!-- Quick tiles (filled in by MainActivity) -->
         <LinearLayout
+            android:id="@+id/tileGrid"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginHorizontal="-4dp"
             android:layout_marginTop="12dp"
-            android:orientation="horizontal">
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnDeadlines"
-                android:layout_width="0dp"
-                android:layout_height="64dp"
-                android:layout_marginEnd="6dp"
-                android:layout_weight="1"
-                android:backgroundTint="@color/home_deadline"
-                android:text="&#9200;&#65039; Deadlines"
-                android:textColor="@android:color/white"
-                android:textStyle="bold"
-                app:cornerRadius="20dp" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnRoutine"
-                android:layout_width="0dp"
-                android:layout_height="64dp"
-                android:layout_marginStart="6dp"
-                android:layout_weight="1"
-                android:backgroundTint="@color/home_routine"
-                android:text="&#128218; Class routine"
-                android:textColor="@android:color/white"
-                android:textStyle="bold"
-                app:cornerRadius="20dp" />
-        </LinearLayout>
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnTimetable"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_marginTop="12dp"
-            android:backgroundTint="@color/home_timetable"
-            android:text="&#128338; Class timetable"
-            android:textColor="@android:color/white"
-            android:textStyle="bold"
-            app:cornerRadius="20dp" />
-
-        <!-- Study plan: teal so it is never confused with classes -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnStudy"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_marginTop="12dp"
-            android:backgroundTint="@color/study_teal"
-            android:text="&#128214; My study plan"
-            android:textColor="@android:color/white"
-            android:textStyle="bold"
-            app:cornerRadius="20dp" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnStats"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_marginTop="12dp"
-            android:backgroundTint="@color/home_stats"
-            android:text="&#128202; Deadline statistics"
-            android:textColor="@android:color/white"
-            android:textStyle="bold"
-            app:cornerRadius="20dp" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnCalendar"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_marginTop="12dp"
-            android:backgroundTint="@color/home_calendar"
-            android:text="&#128197; Deadline calendar"
-            android:textColor="@android:color/white"
-            android:textStyle="bold"
-            app:cornerRadius="20dp" />
+            android:orientation="vertical" />
 
         <!-- CR only (hidden by code for normal students) -->
         <com.google.android.material.button.MaterialButton
@@ -322,69 +310,9 @@
             android:layout_height="56dp"
             android:layout_marginTop="12dp"
             android:backgroundTint="@color/home_post"
-            android:text="&#128227; Post deadline to section"
+            android:text="Post deadline to section"
             android:textColor="@android:color/white"
             android:textStyle="bold"
             app:cornerRadius="20dp" />
-
-        <!-- Settings card -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            app:cardBackgroundColor="?attr/colorSurfaceVariant"
-            app:cardCornerRadius="24dp"
-            app:cardElevation="0dp"
-            app:strokeWidth="0dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/swTracker"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="&#128276; Next-deadline tracker"
-                    android:textColor="?attr/colorOnSurface" />
-
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/swDark"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="&#127769; Dark mode"
-                    android:textColor="?attr/colorOnSurface" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnExactAlarm"
-                    style="@style/Widget.Material3.Button.OutlinedButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="&#9200;&#65039; Allow exact reminders" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <TextView
-            android:id="@+id/tvProviderCount"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:textSize="13sp" />
-
-        <!-- Logout as a real button -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnLogout"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_marginTop="16dp"
-            android:text="&#128682; Log out"
-            android:textColor="?attr/colorError"
-            app:cornerRadius="20dp"
-            app:strokeColor="?attr/colorError" />
     </LinearLayout>
 </ScrollView>
