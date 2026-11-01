@@ -49,24 +49,26 @@
             </LinearLayout>
 
             <FrameLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
                 android:layout_marginStart="12dp">
 
                 <com.google.android.material.progressindicator.CircularProgressIndicator
                     android:id="@+id/ring"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:layout_gravity="center"
                     android:indeterminate="false"
                     android:max="100"
                     app:indicatorInset="4dp"
-                    app:indicatorSize="68dp"
+                    app:indicatorSize="72dp"
                     app:trackThickness="6dp" />
 
                 <TextView
                     android:id="@+id/tvPercent"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:layout_gravity="center"
                     android:gravity="center"
                     android:maxLines="1"
                     android:textColor="?attr/colorOnSurface"
