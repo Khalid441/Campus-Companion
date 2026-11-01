@@ -72,6 +72,7 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
 
         b.fabAdd.setOnClickListener(v -> showCourseDialog(null));
         b.tvRecapLink.setOnClickListener(v -> startActivity(new Intent(this, RecapActivity.class)));
+        b.tvExport.setOnClickListener(v -> sharePdf());
     }
 
     /** Recalculates every card and the two chips at the top. */
@@ -92,6 +93,48 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
         int streak = AttendanceStats.streak(records);
         b.tvStreak.setVisibility(streak < 2 ? View.GONE : View.VISIBLE);
         b.tvStreak.setText("🔥 " + streak + " in a row");
+    }
+
+    /** Builds the attendance report as a PDF and opens the share sheet. */
+    private void sharePdf() {
+        if (courses.isEmpty()) {
+            Snackbar.make(b.getRoot(), "Add a course first", Snackbar.LENGTH_SHORT)
+                    .setAnchorView(b.fabAdd).show();
+            return;
+        }
+        b.tvExport.setEnabled(false);
+        final List<AttendanceCourse> cs = new ArrayList<>(courses);
+        final List<AttendanceRecord> rs = new ArrayList<>(records);
+        Context app = getApplicationContext();
+        AppDatabase.executor.execute(() -> {
+            try {
+                java.io.File pdf = com.example.campuscompanion.util.AttendancePdf.create(
+                        app,
+                        com.example.campuscompanion.auth.UserSession.name(app),
+                        com.example.campuscompanion.auth.UserSession.label(app),
+                        cs, rs, AppDatabase.get(app).topicDao().getAllNow());
+                android.net.Uri uri = androidx.core.content.FileProvider.getUriForFile(
+                        app, app.getPackageName() + ".fileprovider", pdf);
+                runOnUiThread(() -> {
+                    b.tvExport.setEnabled(true);
+                    if (isFinishing() || isDestroyed()) return;
+                    Intent send = new Intent(Intent.ACTION_SEND)
+                            .setType("application/pdf")
+                            .putExtra(Intent.EXTRA_STREAM, uri)
+                            .putExtra(Intent.EXTRA_SUBJECT, "My attendance report")
+                            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    startActivity(Intent.createChooser(send, "Share attendance report"));
+                });
+            } catch (Exception e) {
+                runOnUiThread(() -> {
+                    b.tvExport.setEnabled(true);
+                    if (!isFinishing() && !isDestroyed()) {
+                        Snackbar.make(b.getRoot(), "Could not create the PDF: " + e.getMessage(),
+                                Snackbar.LENGTH_LONG).setAnchorView(b.fabAdd).show();
+                    }
+                });
+            }
+        });
     }
 
     /** The newest class note of a course (records are newest first), or null. */
@@ -238,6 +281,25 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
             if (existing.totalPlanned > 0) d.etTotal.setText(String.valueOf(existing.totalPlanned));
         }
 
+        final long[] exam = {existing == null ? 0 : existing.examDate};
+        d.etExam.setText(exam[0] > 0 ? DAY.format(new Date(exam[0])) : "");
+        d.etExam.setOnClickListener(v -> {
+            Calendar start = Calendar.getInstance();
+            if (exam[0] > 0) start.setTimeInMillis(exam[0]);
+            DatePickerDialog picker = new DatePickerDialog(this, (pk, y, m, day) -> {
+                Calendar chosen = Calendar.getInstance();
+                chosen.set(y, m, day);
+                exam[0] = com.example.campuscompanion.util.DateUtil.startOfDay(chosen.getTimeInMillis());
+                d.etExam.setText(DAY.format(new Date(exam[0])));
+            }, start.get(Calendar.YEAR), start.get(Calendar.MONTH), start.get(Calendar.DAY_OF_MONTH));
+            picker.getDatePicker().setMinDate(System.currentTimeMillis() - 1000);
+            picker.setButton(DatePickerDialog.BUTTON_NEUTRAL, "Clear", (di, w) -> {
+                exam[0] = 0;
+                d.etExam.setText("");
+            });
+            picker.show();
+        });
+
         androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
                 .setTitle(existing == null ? "Add course" : "Edit course")
                 .setView(d.getRoot())
@@ -262,6 +324,7 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
             c.code = code;
             c.minPercent = min;
             c.totalPlanned = Math.max(0, total);
+            c.examDate = exam[0];
 
             if (existing == null) {
                 c.createdAt = System.currentTimeMillis();

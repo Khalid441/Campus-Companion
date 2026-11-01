@@ -23,6 +23,12 @@ public interface TopicDao {
     @Query("DELETE FROM course_topics WHERE courseId = :courseId")
     void deleteOf(int courseId);
 
+    @Query("SELECT * FROM course_topics")
+    List<Topic> getAllNow();
+
+    @Query("DELETE FROM course_topics")
+    void deleteAll();
+
     @Query("SELECT * FROM course_topics ORDER BY taughtAt DESC, id DESC")
     LiveData<List<Topic>> getAll();
 

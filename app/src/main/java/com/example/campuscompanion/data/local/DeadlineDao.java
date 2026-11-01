@@ -39,6 +39,12 @@ public interface DeadlineDao {
     @Query("SELECT * FROM deadlines WHERE remoteId = :remoteId LIMIT 1")
     Deadline getByRemoteId(String remoteId);
 
+    @Query("SELECT * FROM deadlines WHERE isShared = 0")
+    List<Deadline> getPersonal();
+
+    @Query("DELETE FROM deadlines WHERE isShared = 0")
+    void deletePersonal();
+
     @Query("SELECT * FROM deadlines WHERE isShared = 1")
     List<Deadline> getShared();
 

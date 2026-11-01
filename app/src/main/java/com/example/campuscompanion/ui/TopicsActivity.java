@@ -89,6 +89,7 @@ public class TopicsActivity extends AppCompatActivity {
             Topic u = t.copy();
             RevisionPlan.markRevised(u, System.currentTimeMillis());
             dao.update(u);
+            com.example.campuscompanion.util.StudyStats.recordRevision(getApplicationContext());
         }));
 
         r.getRoot().setOnLongClickListener(v -> {

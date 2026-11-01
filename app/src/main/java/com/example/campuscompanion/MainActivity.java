@@ -160,6 +160,7 @@ public class MainActivity extends AppCompatActivity {
 
         b.cardStudy.setOnClickListener(v -> startActivity(new Intent(this, StudyActivity.class)));
         b.tvRevise.setOnClickListener(v -> startActivity(new Intent(this, RevisionActivity.class)));
+        b.tvStudyGoal.setOnClickListener(v -> com.example.campuscompanion.ui.GoalDialog.show(this, this::renderGoal));
         b.tvWeather.setOnClickListener(v -> {
             if (hasLocationPermission()) loadWeather(); else loadWeatherDefaultCity();
         });
@@ -193,6 +194,7 @@ public class MainActivity extends AppCompatActivity {
 
         renderNotice(NoticeManager.latest.getValue());
         renderNextClass();
+        renderGoal();
         NextDeadlineWidget.refresh(this);
 
         // Only fetch here if permission is already granted; otherwise the
@@ -434,6 +436,17 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    /** Revision streak and the weekly goal bar. */
+    private void renderGoal() {
+        if (b == null) return;
+        int goal = com.example.campuscompanion.util.StudyStats.goal(this);
+        int done = com.example.campuscompanion.util.StudyStats.revisionsThisWeek(this);
+        b.tvStudyGoal.setText(com.example.campuscompanion.util.StudyStats.summary(this) + "   \u203A");
+        b.goalBar.setVisibility(goal == 0 ? View.GONE : View.VISIBLE);
+        b.goalBar.setProgress(Math.min(100, goal == 0 ? 0 : done * 100 / goal));
+        b.goalBar.setContentDescription("Weekly revision goal: " + done + " of " + goal);
+    }
+
     private void showRevisionCount() {
         AppDatabase.get(this).topicDao().getAll().observe(this, list -> {
             long now = System.currentTimeMillis();
@@ -441,6 +454,7 @@ public class MainActivity extends AppCompatActivity {
             for (Topic t : list) if (RevisionPlan.isDue(t, now)) due++;
             b.tvRevise.setText(due == 0 ? "No revision due today  \u203A"
                     : due + (due == 1 ? " topic" : " topics") + " to revise  \u203A");
+            renderGoal();
         });
     }
 
@@ -453,6 +467,7 @@ public class MainActivity extends AppCompatActivity {
         dao.getCourses().observe(this, list -> {
             homeCourses = list;
             renderAttendance();
+            renderExam();
         });
         dao.getAllRecords().observe(this, list -> {
             homeRecords = list;
@@ -460,6 +475,27 @@ public class MainActivity extends AppCompatActivity {
         });
         b.cardAttendance.setOnClickListener(v ->
                 startActivity(new Intent(this, AttendanceActivity.class)));
+    }
+
+    /** The nearest upcoming exam among the attendance courses. */
+    private void renderExam() {
+        if (b == null) return;
+        AttendanceCourse best = null;
+        int bestDays = Integer.MAX_VALUE;
+        for (AttendanceCourse c : homeCourses) {
+            int d = com.example.campuscompanion.util.ExamUtil.daysLeft(c.examDate);
+            if (d >= 0 && d < bestDays) {
+                best = c;
+                bestDays = d;
+            }
+        }
+        if (best == null) {
+            b.tvNextExam.setVisibility(View.GONE);
+            return;
+        }
+        b.tvNextExam.setVisibility(View.VISIBLE);
+        b.tvNextExam.setText("Exam: " + best.title() + "  \u2022  "
+                + com.example.campuscompanion.util.ExamUtil.label(bestDays));
     }
 
     private void renderAttendance() {

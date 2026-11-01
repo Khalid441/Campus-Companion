@@ -82,6 +82,7 @@
         <activity android:name=".ui.DayActivity" android:exported="false" />
         <activity android:name=".ui.RecapActivity" android:exported="false" />
         <activity android:name=".ui.SettingsActivity" android:exported="false" />
+        <activity android:name=".ui.AboutActivity" android:exported="false" />
 
         <receiver android:name=".receiver.ReminderReceiver" android:exported="false" />
         <receiver android:name=".receiver.StudyReminderReceiver" android:exported="false" />
@@ -105,6 +106,17 @@
                 android:resource="@xml/next_deadline_widget_info" />
         </receiver>
 
+        <receiver
+            android:name=".widget.TodayWidget"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/today_widget_info" />
+        </receiver>
+
         <service
             android:name=".service.NextDeadlineService"
             android:exported="false"
@@ -113,6 +125,17 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="next_deadline_tracker" />
         </service>
+
+        <!-- Lets the attendance PDF be shared with other apps -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
 
         <provider
             android:name=".provider.DeadlineProvider"

@@ -56,6 +56,12 @@ service cloud.firestore {
         && request.resource.data.groupId == resource.data.groupId;
     }
 
+    // Optional cloud backup of the student's own data: only that student, nobody else
+    // (not the class representative, not other students).
+    match /users/{uid}/backup/{doc} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
     // Class data (notices, deadlines, and the class document with its join code):
     // only members of that exact university + section can read; only its CR can write.
     match /sections/{groupId}/{document=**} {

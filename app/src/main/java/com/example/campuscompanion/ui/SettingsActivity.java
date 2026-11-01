@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.view.View;
 import android.widget.CompoundButton;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
@@ -27,9 +28,12 @@ import com.example.campuscompanion.reminder.ReminderScheduler;
 import com.example.campuscompanion.reminder.RevisionScheduler;
 import com.example.campuscompanion.reminder.StudyReminderScheduler;
 import com.example.campuscompanion.service.NextDeadlineService;
+import com.example.campuscompanion.sync.BackupManager;
 import com.example.campuscompanion.sync.NoticeManager;
 import com.example.campuscompanion.sync.SyncManager;
+import com.example.campuscompanion.util.StudyStats;
 import com.example.campuscompanion.widget.NextDeadlineWidget;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
@@ -80,6 +84,57 @@ public class SettingsActivity extends AppCompatActivity {
             }
         });
         b.btnLogout.setOnClickListener(v -> logout());
+        b.btnAbout.setOnClickListener(v -> startActivity(new Intent(this, AboutActivity.class)));
+        b.btnGoal.setOnClickListener(v -> chooseGoal());
+        b.btnBackupNow.setOnClickListener(v -> backupNow());
+        b.btnRestore.setOnClickListener(v -> confirmRestore());
+    }
+
+    // ---------------------------------------------------------------------
+    // Weekly goal and cloud backup
+    // ---------------------------------------------------------------------
+
+    private void chooseGoal() {
+        GoalDialog.show(this, this::showGoal);
+    }
+
+    private void showGoal() {
+        int g = StudyStats.goal(this);
+        b.btnGoal.setText("Weekly revision goal: " + (g == 0 ? "off" : String.valueOf(g)));
+    }
+
+    private void showBackupInfo() {
+        long last = BackupManager.lastBackup(this);
+        b.tvBackupInfo.setText(last == 0 ? "No backup yet"
+                : "Last backup: " + new java.text.SimpleDateFormat("d MMM, h:mm a", java.util.Locale.getDefault())
+                .format(new java.util.Date(last)));
+    }
+
+    private void backupNow() {
+        b.btnBackupNow.setEnabled(false);
+        BackupManager.backupNow(this, (ok, msg) -> {
+            if (isFinishing() || isDestroyed()) return;
+            b.btnBackupNow.setEnabled(true);
+            showBackupInfo();
+            Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
+        });
+    }
+
+    private void confirmRestore() {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Restore from backup?")
+                .setMessage("This replaces the attendance, notes, topics, routine, study plan and personal "
+                        + "deadlines on this phone with your last backup.")
+                .setPositiveButton("Restore", (d, w) -> {
+                    b.btnRestore.setEnabled(false);
+                    BackupManager.restore(this, (ok, msg) -> {
+                        if (isFinishing() || isDestroyed()) return;
+                        b.btnRestore.setEnabled(true);
+                        Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
+                    });
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     @Override
@@ -99,6 +154,15 @@ public class SettingsActivity extends AppCompatActivity {
         b.swDark.setOnCheckedChangeListener(null);
         b.swDark.setChecked(isDark);
         b.swDark.setOnCheckedChangeListener(darkListener);
+
+        b.swBackup.setOnCheckedChangeListener(null);
+        b.swBackup.setChecked(BackupManager.isEnabled(this));
+        b.swBackup.setOnCheckedChangeListener((button, on) -> {
+            BackupManager.setEnabled(this, on);
+            if (on) backupNow();
+        });
+        showBackupInfo();
+        showGoal();
 
         b.btnExactAlarm.setVisibility(ReminderScheduler.canScheduleExact(this) ? View.GONE : View.VISIBLE);
         showProviderCount();
@@ -136,6 +200,7 @@ public class SettingsActivity extends AppCompatActivity {
         stopService(new Intent(this, NextDeadlineService.class));
         prefs.edit().putBoolean(NextDeadlineService.KEY_TRACKER_ON, false).apply();
         RevisionScheduler.cancel(this);
+        BackupManager.setEnabled(this, false);   // the next account starts with backup off
         SyncManager.stop(this);
         NoticeManager.stop();
         FirebaseAuth.getInstance().signOut();

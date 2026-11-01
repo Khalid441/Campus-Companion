@@ -83,6 +83,14 @@ This project was built for the Android part of the course plan (Weeks 8–13). T
 | ✅ **Topic checklist** | Every course keeps a list of topics (planned, taught, revised 0 to 3 times). Topics from class notes are added automatically. |
 | 🔁 **Spaced revision** | Taught topics come back **1, 3 and 7 days** later on the Revision screen, with an optional daily 7 PM notification. |
 | 🗓️ **My day** | One timeline of the day's classes, study sessions, deadlines and revision, with Present / Absent buttons on the class cards. |
+| 🎯 **Exam countdown** | Add an exam date to a course. Home shows *"Exam: CSE 2209 · 12 days left"*, the course card shows it too, and the Revision list puts topics of the nearest exam first. |
+| 🔔 **Attendance alerts** | After you mark an absence, a notification warns you when a course is below, or within 5 points of, your own minimum. |
+| 🔥 **Revision streak and weekly goal** | Days in a row with at least one revision, and a progress bar towards a weekly goal you choose in Settings. |
+| 🧩 **Two widgets** | *Next deadline* and *Today* (today's classes, topics to revise, next exam). |
+| 📄 **Share attendance as PDF** | One tap builds an A4 report (per course: counts, %, advice, exam, topics covered) and opens the share sheet. |
+| ☁️ **Optional cloud backup** | Off by default. When on, your own data is copied to `users/{uid}/backup/latest` in Firestore (only you can read it) and can be restored on a new phone. |
+| ♿ **Accessibility** | Text in `sp`, 48dp touch targets, spoken descriptions for rings and bars, and readable teal text in dark mode. |
+| ℹ️ **About page** | Version, what the app uses from the course labs, and a short privacy note. |
 | 📊 **Weekly recap** | Last 7 days: classes attended, topics covered, revision still due, deadlines done. |
 | 📊 **Deadline statistics** | Completion donut chart, a bar chart of deadlines due in the next 7 days, and a priority breakdown. |
 | 📅 **Deadline calendar** | A month calendar marking days that have deadlines. |
@@ -261,7 +269,7 @@ app/src/main/java/com/example/campuscompanion/
 | `deadlines` | id, title, course, note, priority, dueAt, remindBeforeMinutes, done, isShared, remoteId |
 | `routine` | id, course, room, teacher, dayOfWeek, startMinutes, endMinutes |
 | `study_sessions` | id, subject, topic, daysMask, startMinutes, endMinutes, reminderMinutes, enabled |
-| `attendance_courses` | id, name, code, minPercent, totalPlanned, createdAt |
+| `attendance_courses` | id, name, code, minPercent, totalPlanned, createdAt, examDate |
 | `attendance_records` | id, courseId, date, status (0 present, 1 absent, 2 cancelled), topic (class note) |
 | `course_topics` | id, courseId, title, taught, taughtAt, revisedCount, nextRevisionAt, remind |
 

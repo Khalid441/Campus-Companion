@@ -11,7 +11,9 @@ import androidx.room.RoomDatabase;
 import androidx.room.migration.Migration;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
+import com.example.campuscompanion.sync.BackupManager;
 import com.example.campuscompanion.widget.NextDeadlineWidget;
+import com.example.campuscompanion.widget.TodayWidget;
 import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.Set;
@@ -20,7 +22,7 @@ import java.util.concurrent.Executors;
 
 @Database(entities = {Deadline.class, RoutineEntry.class, StudySession.class,
         AttendanceCourse.class, AttendanceRecord.class, Topic.class},
-        version = 4, exportSchema = false)
+        version = 5, exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
 
     public abstract DeadlineDao deadlineDao();
@@ -84,6 +86,14 @@ public abstract class AppDatabase extends RoomDatabase {
         }
     };
 
+    /** Version 4 -> 5: exam date per attendance course. Data is kept. */
+    static final Migration MIGRATION_4_5 = new Migration(4, 5) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase db) {
+            db.execSQL("ALTER TABLE `attendance_courses` ADD COLUMN `examDate` INTEGER NOT NULL DEFAULT 0");
+        }
+    };
+
     private static volatile AppDatabase INSTANCE;
     private static volatile String INSTANCE_UID;
 
@@ -99,15 +109,19 @@ public abstract class AppDatabase extends RoomDatabase {
                                     app,
                                     AppDatabase.class,
                                     "campus_companion_" + uid + ".db")
-                            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                             .build();
 
-                    // Redraw the home screen widget whenever deadlines or the routine change
+                    // Redraw the home screen widgets and queue an (optional) cloud backup
+                    // whenever the student's data changes
                     db.getInvalidationTracker().addObserver(
-                            new InvalidationTracker.Observer("deadlines", "routine") {
+                            new InvalidationTracker.Observer("deadlines", "routine", "course_topics",
+                                    "attendance_courses", "attendance_records", "study_sessions") {
                                 @Override
                                 public void onInvalidated(@NonNull Set<String> tables) {
                                     NextDeadlineWidget.refresh(app);
+                                    TodayWidget.refresh(app);
+                                    BackupManager.scheduleIfEnabled(app);
                                 }
                             });
 

@@ -21,6 +21,15 @@ public interface RoutineDao {
     void delete(RoutineEntry e);
 
     @Query("SELECT * FROM routine ORDER BY dayOfWeek ASC, startMinutes ASC")
+    List<RoutineEntry> getAllNow();
+
+    @Query("SELECT * FROM routine WHERE dayOfWeek = :day ORDER BY startMinutes ASC")
+    List<RoutineEntry> getForDayNow(int day);
+
+    @Query("DELETE FROM routine")
+    void deleteAll();
+
+    @Query("SELECT * FROM routine ORDER BY dayOfWeek ASC, startMinutes ASC")
     LiveData<List<RoutineEntry>> getAll();
 
     @Query("SELECT * FROM routine WHERE dayOfWeek = :day ORDER BY startMinutes ASC")

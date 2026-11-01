@@ -124,6 +124,17 @@
                     android:lineSpacingExtra="2dp"
                     android:textColor="?attr/colorOnPrimaryContainer"
                     android:textSize="15sp" />
+
+                <TextView
+                    android:id="@+id/tvNextExam"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:lineSpacingExtra="2dp"
+                    android:textColor="?attr/colorOnPrimaryContainer"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -167,6 +178,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:background="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:minHeight="48dp"
                         android:padding="6dp"
                         android:text="Got it"
                         android:textColor="@color/home_notice"
@@ -212,7 +225,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Today's study plan"
-                    android:textColor="@color/study_teal"
+                    android:textColor="@color/study_teal_text"
                     android:textSize="14sp"
                     android:textStyle="bold" />
 
@@ -231,11 +244,33 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:background="@drawable/bg_chip"
+                    android:gravity="center_vertical"
+                    android:minHeight="40dp"
                     android:paddingHorizontal="12dp"
                     android:paddingVertical="6dp"
                     android:textColor="?attr/colorOnPrimaryContainer"
                     android:textSize="13sp"
                     android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvStudyGoal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:minHeight="40dp"
+                    android:layout_marginTop="10dp"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textSize="13sp" />
+
+                <com.google.android.material.progressindicator.LinearProgressIndicator
+                    android:id="@+id/goalBar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:max="100"
+                    app:trackCornerRadius="4dp"
+                    app:trackThickness="8dp" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

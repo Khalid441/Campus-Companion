@@ -26,6 +26,9 @@ public interface StudyDao {
     @Query("SELECT * FROM study_sessions")
     List<StudySession> getAllNow();
 
+    @Query("DELETE FROM study_sessions")
+    void deleteAll();
+
     @Query("SELECT * FROM study_sessions WHERE id = :id")
     StudySession getById(int id);
 }

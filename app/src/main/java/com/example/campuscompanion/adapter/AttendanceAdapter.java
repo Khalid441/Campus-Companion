@@ -51,6 +51,7 @@ public class AttendanceAdapter extends ListAdapter<AttendanceAdapter.Row, Attend
                     && Objects.equals(a.course.code, b.course.code)
                     && a.course.minPercent == b.course.minPercent
                     && a.course.totalPlanned == b.course.totalPlanned
+                    && a.course.examDate == b.course.examDate
                     && Objects.equals(a.lastTopic, b.lastTopic)
                     && a.stats.present == b.stats.present
                     && a.stats.absent == b.stats.absent
@@ -77,6 +78,11 @@ public class AttendanceAdapter extends ListAdapter<AttendanceAdapter.Row, Attend
         holder.bind(getItem(position));
     }
 
+    private static String examLine(AttendanceCourse c) {
+        int days = com.example.campuscompanion.util.ExamUtil.daysLeft(c.examDate);
+        return days < 0 ? "" : "\nExam: " + com.example.campuscompanion.util.ExamUtil.label(days);
+    }
+
     class VH extends RecyclerView.ViewHolder {
         private final ItemAttendanceCourseBinding b;
 
@@ -92,7 +98,8 @@ public class AttendanceAdapter extends ListAdapter<AttendanceAdapter.Row, Attend
             b.tvName.setText(c.title());
             b.tvCounts.setText("Present " + s.present + "  •  Absent " + s.absent
                     + "  •  Cancelled " + s.cancelled + "\nMinimum " + c.minPercent + "%"
-                    + (c.totalPlanned > 0 ? "  •  " + c.totalPlanned + " classes planned" : ""));
+                    + (c.totalPlanned > 0 ? "  •  " + c.totalPlanned + " classes planned" : "")
+                    + examLine(c));
             b.tvAdvice.setText(s.advice);
 
             boolean hasTopic = row.lastTopic != null && !row.lastTopic.isEmpty();
@@ -110,6 +117,9 @@ public class AttendanceAdapter extends ListAdapter<AttendanceAdapter.Row, Attend
                 b.tvPercent.setText(s.percent + "%");
                 b.ring.setProgressCompat(s.percent, true);
             }
+            b.ring.setContentDescription(s.held == 0
+                    ? "No classes marked yet"
+                    : "Attendance " + s.percent + " percent, your minimum is " + c.minPercent + " percent");
             b.ring.setIndicatorColor(color);
             b.tvPercent.setTextColor(s.held == 0 ? b.tvAdvice.getCurrentTextColor() : color);
             b.btnCancel.setStrokeColor(ColorStateList.valueOf(color));

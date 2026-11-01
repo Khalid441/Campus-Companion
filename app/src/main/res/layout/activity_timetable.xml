@@ -33,7 +33,7 @@
             android:layout_height="wrap_content"
             android:paddingVertical="6dp"
             android:text="Your study plan is separate. Open it &#8594;"
-            android:textColor="@color/study_teal"
+            android:textColor="@color/study_teal_text"
             android:textSize="13sp"
             android:textStyle="bold" />
     </LinearLayout>

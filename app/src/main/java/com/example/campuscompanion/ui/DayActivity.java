@@ -136,7 +136,7 @@ public class DayActivity extends AppCompatActivity {
         int dayIndex = dow - 1;                       // 0 = Sunday
         int classColor = getColor(R.color.home_classes);
         int deadlineColor = getColor(R.color.home_deadline);
-        int teal = getColor(R.color.study_teal);
+        int teal = getColor(R.color.study_teal_text);
 
         for (RoutineEntry r : routine) {
             if (r.dayOfWeek != dow) continue;

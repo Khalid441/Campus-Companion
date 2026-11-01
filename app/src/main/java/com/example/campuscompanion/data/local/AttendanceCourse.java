@@ -14,6 +14,7 @@ public class AttendanceCourse {
     public int minPercent;     // the student's own minimum attendance, 1..100
     public int totalPlanned;   // classes expected this term; 0 = not set
     public long createdAt;     // epoch millis
+    public long examDate;      // start of the exam day, epoch millis; 0 = not set
 
     public String title() {
         boolean hasCode = code != null && !code.trim().isEmpty();

@@ -2,4 +2,6 @@
 <resources>
     <!-- Study plan is always teal; university classes stay purple -->
     <color name="study_teal">#00897B</color>
+    <!-- Teal for TEXT: darker in light mode, lighter in dark mode so it stays readable -->
+    <color name="study_teal_text">#00695C</color>
 </resources>

@@ -34,6 +34,25 @@ public interface AttendanceDao {
     @Delete
     void deleteRecord(AttendanceRecord r);
 
+    // ---- background-thread helpers (alerts, backup) ----
+    @Query("SELECT * FROM attendance_courses")
+    List<AttendanceCourse> getCoursesNow();
+
+    @Query("SELECT * FROM attendance_courses WHERE id = :id")
+    AttendanceCourse courseNow(int id);
+
+    @Query("SELECT * FROM attendance_records")
+    List<AttendanceRecord> getRecordsNow();
+
+    @Query("SELECT * FROM attendance_records WHERE courseId = :courseId")
+    List<AttendanceRecord> recordsOfNow(int courseId);
+
+    @Query("DELETE FROM attendance_records")
+    void deleteAllRecords();
+
+    @Query("DELETE FROM attendance_courses")
+    void deleteAllCourses();
+
     @Query("UPDATE attendance_records SET topic = :topic WHERE id = :id")
     void setTopic(int id, String topic);
 

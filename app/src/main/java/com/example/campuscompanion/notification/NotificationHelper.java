@@ -16,6 +16,7 @@ import androidx.core.content.ContextCompat;
 
 import com.example.campuscompanion.data.local.Deadline;
 import com.example.campuscompanion.data.local.StudySession;
+import com.example.campuscompanion.ui.AttendanceActivity;
 import com.example.campuscompanion.ui.DeadlinesActivity;
 import com.example.campuscompanion.ui.RevisionActivity;
 import com.example.campuscompanion.ui.StudyActivity;
@@ -30,6 +31,7 @@ public final class NotificationHelper {
     public static final String CHANNEL_TRACKER = "deadline_tracker";
     public static final String CHANNEL_STUDY = "study_reminders";
     public static final String CHANNEL_REVISION = "revision_reminders";
+    public static final String CHANNEL_ALERTS = "attendance_alerts";
 
     private NotificationHelper() {}
 
@@ -59,6 +61,11 @@ public final class NotificationHelper {
                 CHANNEL_REVISION, "Revision reminders", NotificationManager.IMPORTANCE_DEFAULT);
         revision.setDescription("Daily reminder to revise topics taught 1, 3 and 7 days ago");
 
+        NotificationChannel alerts = new NotificationChannel(
+                CHANNEL_ALERTS, "Attendance alerts", NotificationManager.IMPORTANCE_HIGH);
+        alerts.setDescription("Warns you when a course gets close to your minimum attendance");
+
+        nm.createNotificationChannel(alerts);
         nm.createNotificationChannel(revision);
         nm.createNotificationChannel(reminders);
         nm.createNotificationChannel(tracker);
@@ -157,5 +164,30 @@ public final class NotificationHelper {
                 .setContentIntent(pi);
 
         NotificationManagerCompat.from(c).notify(70000, b.build());
+    }
+
+    /** "CSE 2209 is close to your minimum" style warning after an absence. */
+    @SuppressLint("MissingPermission") // guarded by canNotify()
+    public static void showAttendanceWarning(Context c, int courseId, String title, String text) {
+        createChannels(c);
+        if (!canNotify(c)) return;
+
+        Intent open = new Intent(c, AttendanceActivity.class);
+        open.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        PendingIntent pi = PendingIntent.getActivity(c, 80000 + courseId, open,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+        NotificationCompat.Builder b = new NotificationCompat.Builder(c, CHANNEL_ALERTS)
+                .setSmallIcon(android.R.drawable.ic_dialog_alert)
+                .setColor(0xFFF59E0B)
+                .setContentTitle(title)
+                .setContentText(text)
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(text))
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_STATUS)
+                .setAutoCancel(true)
+                .setContentIntent(pi);
+
+        NotificationManagerCompat.from(c).notify(80000 + courseId, b.build());
     }
 }

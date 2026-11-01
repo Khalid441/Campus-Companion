@@ -89,7 +89,7 @@ public class RecapActivity extends AppCompatActivity {
                 notRevised == 0 ? "Every taught topic was revised at least once."
                         : notRevised + (notRevised == 1 ? " taught topic has" : " taught topics have")
                         + " not been revised yet.",
-                getColor(R.color.study_teal), RevisionActivity.class);
+                getColor(R.color.study_teal_text), RevisionActivity.class);
 
         // ---- deadlines ----
         int total = 0, done = 0, upcoming = 0;
