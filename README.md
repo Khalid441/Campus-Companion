@@ -77,7 +77,17 @@ This project was built for the Android part of the course plan (Weeks 8–13). T
 | 🕒 **Class timetable** | A weekly grid (days across, hours down) drawn with a custom Canvas view. |
 | 📖 **My study plan** | Personal study sessions with subject, topic, days of the week, time and reminder. Sessions can be edited, switched on or off, or deleted. Kept separate from university classes (teal colour) so they never get mixed up. |
 | ✅ **Attendance tracker** | The student adds their own courses (name, optional code, **own minimum %**, optional total classes) and marks each class **Present / Absent / Cancelled** with one tap, today or on another date. Each course shows a coloured progress ring, counts, and plain advice such as *"You can miss 3 more classes and still reach 75%"* or *"Attend the next 4 classes in a row"*. History can be edited, and there is an overall % and a streak. Saved on the phone (Room), works offline. |
-| 🧭 **Bottom navigation** | Home, Notices, Deadlines, Attendance and Study are one tap apart. |
+| 🧭 **Messenger-style bottom navigation** | Home, Notices, Deadlines, Attendance and Study are five tabs inside **one screen** (fragments shown and hidden), so the bar never flickers when you switch. |
+| 🔍 **Search everything** | One search box (magnifier on Home) finds deadlines, notices, courses, topics, class notes, exams, study sessions and routine as you type, with the matches highlighted. Works offline; keeps recent searches. |
+| 💡 **Smart tips** | A card on Home with the most useful next step: an exam with topics still to revise, a deadline due within a day, revision due today, or the course whose attendance needs attention. Tap for the next tip. |
+| 📅 **Exam planner** | For each upcoming exam, your unrevised topics are spread over the days left, least revised first, with a light-review day before the exam. |
+| ⏱️ **Focus timer** | Pomodoro-style timer (15 / 25 / 45 min and a 5 min break), screen stays on, minutes count towards *today* and *last 7 days*. |
+| 📶 **Offline banner** | A thin bar says *"You're offline"* and turns green *"Back online"* when the connection returns. |
+| ⌨️ **Launcher shortcuts** | Long-press the app icon: *Add deadline*, *Attendance*, *Search*. |
+| 🧩 **Three widgets** | *Next deadline*, *Today*, and *Attendance* (your lowest course with a one-tap **Present today**). |
+| 👋 **Onboarding and demo data** | A three-page intro on first launch and a **Load sample data** button (removable in Settings; demo items are tagged "[Demo]"). |
+| ↩️ **Undo** | Deleting a deadline, study session, exam, topic, class or a whole course offers **Undo**. |
+| 🎨 **Theme choice** | System / Light / Dark, plus optional wallpaper colours on Android 12+. |
 | 🌅 **Shorter home screen** | A *Today at a glance* card (weather, next class, next deadline), a compact notice with **Got it**, the study plan with *"N topics to revise"*, the attendance card and a grid of quick tiles. Settings and profile moved to their own screen. |
 | 📝 **Class notes** | After tapping **Present**, a sheet asks *"What was taught today?"*. The note is saved with that class and shown as **Last taught** on the course card. |
 | ✅ **Topic checklist** | Every course keeps a list of topics (planned, taught, revised 0 to 3 times). Topics from class notes are added automatically. |
@@ -109,6 +119,8 @@ This project was built for the Android part of the course plan (Weeks 8–13). T
 | 🏫 **University + section separation** | Each class has its own private space. A student from another section or another university never sees it. |
 | 🔑 **Two ways to join** | **Type 1:** universities with student email: sign up with the verified university email (for example KUET). **Type 2:** universities without student email: sign up with any email plus a **class code** from the CR. |
 | 🔐 **Sign-in options** | Email and password (with email verification for university email), **Google** and **Facebook**. |
+| 📁 **Class resources** | The CR shares links (slides, folders, past papers); everyone can open them from the Resources tile. |
+| 🗳️ **Class polls** | The CR asks a question with 2 to 4 options. Students vote (and can change or remove their vote while it is open) and see live results. An open poll you have not voted on shows on Home. |
 | 🗝️ **Class code sharing** | The CR can view, share (WhatsApp and similar) and reset the class code from the Notices screen. |
 
 ---
@@ -320,6 +332,27 @@ Class separation is enforced on the **server** with Firestore security rules (`f
 4. **Rules:** publish `firestore.rules` in the Firebase console.
 5. **Add a university:** in Firestore create `universities/{code}` with `name`, `domains` (empty for class-code universities) and `sections`.
 6. **Run:** open the project in Android Studio, sync Gradle and press **Run**. To install on another phone without Android Studio, use **Build > Build APK(s)** and share `app-debug.apk`.
+
+---
+
+## 🧭 App structure (single-screen tabs)
+
+```mermaid
+flowchart LR
+    Login[LoginActivity] --> Main[MainActivity<br/>host + bottom bar]
+    Main --> Home[HomeFragment]
+    Main --> Notices[NoticesFragment]
+    Main --> Deadlines[DeadlinesFragment]
+    Main --> Attendance[AttendanceFragment]
+    Main --> Study[StudyFragment]
+    Home --> Tools[Search, Planner, Focus, Revision,<br/>Exams, Resources, Polls, Recap]
+    Main -. launcher shortcuts and notifications .-> Main
+    Attendance --- Room[(Room database)]
+    Deadlines --- Room
+    Notices --- FS[(Firestore: notices, resources, polls)]
+```
+
+Screenshots can be added to a `docs/` folder and linked here.
 
 ---
 

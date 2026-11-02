@@ -118,7 +118,13 @@ public class TopicsActivity extends AppCompatActivity {
         new MaterialAlertDialogBuilder(this)
                 .setTitle("Delete this topic?")
                 .setMessage(t.title)
-                .setPositiveButton("Delete", (d, w) -> AppDatabase.executor.execute(() -> dao.delete(t)))
+                .setPositiveButton("Delete", (d, w) -> {
+                    AppDatabase.executor.execute(() -> dao.delete(t));
+                    com.google.android.material.snackbar.Snackbar.make(b.getRoot(), "Topic deleted", com.google.android.material.snackbar.Snackbar.LENGTH_LONG)
+                            .setAnchorView(b.fabAdd)
+                            .setAction("Undo", u -> AppDatabase.executor.execute(() -> dao.insert(t)))
+                            .show();
+                })
                 .setNegativeButton("Cancel", null)
                 .show();
     }

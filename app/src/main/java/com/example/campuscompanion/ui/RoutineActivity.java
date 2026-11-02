@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.example.campuscompanion.adapter.RoutineAdapter;
+import com.example.campuscompanion.R;
 import com.example.campuscompanion.data.local.AppDatabase;
 import com.example.campuscompanion.data.local.RoutineDao;
 import com.example.campuscompanion.data.local.RoutineEntry;
@@ -30,6 +31,7 @@ public class RoutineActivity extends AppCompatActivity implements RoutineAdapter
         RoutineAdapter adapter = new RoutineAdapter(this);
         b.recycler.setLayoutManager(new LinearLayoutManager(this));
         b.recycler.setAdapter(adapter);
+        b.recycler.setLayoutAnimation(android.view.animation.AnimationUtils.loadLayoutAnimation(this, R.anim.layout_rise));
 
         dao.getAll().observe(this, list -> {
             adapter.submitList(list);
@@ -45,7 +47,13 @@ public class RoutineActivity extends AppCompatActivity implements RoutineAdapter
         new MaterialAlertDialogBuilder(this)
                 .setTitle("Delete class?")
                 .setMessage(e.course)
-                .setPositiveButton("Delete", (d, w) -> AppDatabase.executor.execute(() -> dao.delete(e)))
+                .setPositiveButton("Delete", (d, w) -> {
+                    AppDatabase.executor.execute(() -> dao.delete(e));
+                    com.google.android.material.snackbar.Snackbar.make(b.getRoot(), "Class deleted", com.google.android.material.snackbar.Snackbar.LENGTH_LONG)
+                            .setAnchorView(b.fabAdd)
+                            .setAction("Undo", u -> AppDatabase.executor.execute(() -> dao.insert(e)))
+                            .show();
+                })
                 .setNegativeButton("Cancel", null)
                 .show();
     }

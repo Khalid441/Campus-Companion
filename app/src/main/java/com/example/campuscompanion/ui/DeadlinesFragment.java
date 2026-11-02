@@ -95,6 +95,7 @@ public class DeadlinesFragment extends Fragment implements DeadlineAdapter.Liste
         adapter = new DeadlineAdapter(this);
         b.recycler.setLayoutManager(new LinearLayoutManager(requireContext()));
         b.recycler.setAdapter(adapter);
+        b.recycler.setLayoutAnimation(android.view.animation.AnimationUtils.loadLayoutAnimation(requireContext(), R.anim.layout_rise));
 
         dao.getAll().observe(getViewLifecycleOwner(), list -> {
             all = list;
@@ -220,7 +221,7 @@ public class DeadlinesFragment extends Fragment implements DeadlineAdapter.Liste
         }
         adapter.submitList(out);
         if (out.isEmpty()) {
-            b.emptyText.setText(all.isEmpty() ? "No deadlines yet.\nTap + to add one." : "No matches");
+            b.emptyText.setText(all.isEmpty() ? "\u2705\nNo deadlines yet\nTap + to add one." : "\uD83D\uDD0D\nNo matches");
             b.emptyText.setVisibility(View.VISIBLE);
         } else {
             b.emptyText.setVisibility(View.GONE);

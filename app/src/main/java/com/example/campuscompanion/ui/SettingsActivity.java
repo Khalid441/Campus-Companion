@@ -31,8 +31,10 @@ import com.example.campuscompanion.service.NextDeadlineService;
 import com.example.campuscompanion.sync.BackupManager;
 import com.example.campuscompanion.sync.NoticeManager;
 import com.example.campuscompanion.sync.SyncManager;
+import com.example.campuscompanion.util.SampleData;
 import com.example.campuscompanion.util.StudyStats;
 import com.example.campuscompanion.widget.NextDeadlineWidget;
+import com.google.android.material.color.DynamicColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -52,13 +54,6 @@ public class SettingsActivity extends AppCompatActivity {
             stopService(new Intent(this, NextDeadlineService.class));
         }
         prefs.edit().putBoolean(NextDeadlineService.KEY_TRACKER_ON, on).apply();
-    };
-
-    private final CompoundButton.OnCheckedChangeListener darkListener = (button, on) -> {
-        int mode = on ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO;
-        getSharedPreferences(CampusApp.PREFS, Context.MODE_PRIVATE)
-                .edit().putInt(CampusApp.KEY_NIGHT_MODE, mode).apply();
-        AppCompatDelegate.setDefaultNightMode(mode); // recreates the screen with the new theme
     };
 
     @Override
@@ -86,6 +81,10 @@ public class SettingsActivity extends AppCompatActivity {
         b.btnLogout.setOnClickListener(v -> logout());
         b.btnAbout.setOnClickListener(v -> startActivity(new Intent(this, AboutActivity.class)));
         b.btnGoal.setOnClickListener(v -> chooseGoal());
+        b.btnSampleLoad.setOnClickListener(v -> SampleData.load(this, () -> runOnUiThread(() ->
+                Toast.makeText(this, "Sample data added", Toast.LENGTH_SHORT).show())));
+        b.btnSampleRemove.setOnClickListener(v -> SampleData.remove(this, () -> runOnUiThread(() ->
+                Toast.makeText(this, "Sample data removed", Toast.LENGTH_SHORT).show())));
         b.btnBackupNow.setOnClickListener(v -> backupNow());
         b.btnRestore.setOnClickListener(v -> confirmRestore());
     }
@@ -93,6 +92,34 @@ public class SettingsActivity extends AppCompatActivity {
     // ---------------------------------------------------------------------
     // Weekly goal and cloud backup
     // ---------------------------------------------------------------------
+
+    private static final String[] THEME_NAMES = {"System default", "Light", "Dark"};
+    private static final int[] THEME_MODES = {AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM,
+            AppCompatDelegate.MODE_NIGHT_NO, AppCompatDelegate.MODE_NIGHT_YES};
+
+    private int themeIndex() {
+        int mode = getSharedPreferences(CampusApp.PREFS, Context.MODE_PRIVATE)
+                .getInt(CampusApp.KEY_NIGHT_MODE, AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+        for (int i = 0; i < THEME_MODES.length; i++) if (THEME_MODES[i] == mode) return i;
+        return 0;
+    }
+
+    private void showTheme() {
+        b.btnTheme.setText("Theme: " + THEME_NAMES[themeIndex()]);
+    }
+
+    private void chooseTheme() {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Theme")
+                .setSingleChoiceItems(THEME_NAMES, themeIndex(), (d, which) -> {
+                    getSharedPreferences(CampusApp.PREFS, Context.MODE_PRIVATE)
+                            .edit().putInt(CampusApp.KEY_NIGHT_MODE, THEME_MODES[which]).apply();
+                    d.dismiss();
+                    AppCompatDelegate.setDefaultNightMode(THEME_MODES[which]);   // recreates the screen
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
 
     private void chooseGoal() {
         GoalDialog.show(this, this::showGoal);
@@ -149,11 +176,18 @@ public class SettingsActivity extends AppCompatActivity {
         b.swRevision.setChecked(RevisionScheduler.isEnabled(this));
         b.swRevision.setOnCheckedChangeListener((button, on) -> RevisionScheduler.setEnabled(this, on));
 
-        boolean isDark = (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)
-                == Configuration.UI_MODE_NIGHT_YES;
-        b.swDark.setOnCheckedChangeListener(null);
-        b.swDark.setChecked(isDark);
-        b.swDark.setOnCheckedChangeListener(darkListener);
+        showTheme();
+        b.btnTheme.setOnClickListener(v -> chooseTheme());
+        boolean dynamicOk = DynamicColors.isDynamicColorAvailable();
+        b.swDynamic.setVisibility(dynamicOk ? View.VISIBLE : View.GONE);
+        b.swDynamic.setOnCheckedChangeListener(null);
+        b.swDynamic.setChecked(getSharedPreferences(CampusApp.PREFS, Context.MODE_PRIVATE)
+                .getBoolean(CampusApp.KEY_DYNAMIC, false));
+        b.swDynamic.setOnCheckedChangeListener((button, on) -> {
+            getSharedPreferences(CampusApp.PREFS, Context.MODE_PRIVATE)
+                    .edit().putBoolean(CampusApp.KEY_DYNAMIC, on).apply();
+            Toast.makeText(this, "Close and reopen the app to apply the colours", Toast.LENGTH_LONG).show();
+        });
 
         b.swBackup.setOnCheckedChangeListener(null);
         b.swBackup.setChecked(BackupManager.isEnabled(this));

@@ -135,6 +135,7 @@ public abstract class AppDatabase extends RoomDatabase {
                                 public void onInvalidated(@NonNull Set<String> tables) {
                                     NextDeadlineWidget.refresh(app);
                                     TodayWidget.refresh(app);
+                                    com.example.campuscompanion.widget.AttendanceWidget.refresh(app);
                                     BackupManager.scheduleIfEnabled(app);
                                 }
                             });

@@ -20,6 +20,7 @@ import com.example.campuscompanion.data.local.AppDatabase;
 import com.example.campuscompanion.data.local.AttendanceCourse;
 import com.example.campuscompanion.data.local.AttendanceDao;
 import com.example.campuscompanion.data.local.AttendanceRecord;
+import com.example.campuscompanion.data.local.Topic;
 import com.example.campuscompanion.databinding.ActivityAttendanceBinding;
 import com.example.campuscompanion.databinding.DialogAttendanceCourseBinding;
 import com.example.campuscompanion.util.AttendanceMath;
@@ -69,6 +70,7 @@ public class AttendanceFragment extends Fragment implements AttendanceAdapter.Li
         adapter = new AttendanceAdapter(this);
         b.recycler.setLayoutManager(new LinearLayoutManager(requireContext()));
         b.recycler.setAdapter(adapter);
+        b.recycler.setLayoutAnimation(android.view.animation.AnimationUtils.loadLayoutAnimation(requireContext(), R.anim.layout_rise));
 
         dao.getCourses().observe(getViewLifecycleOwner(), list -> {
             courses = list;
@@ -270,12 +272,31 @@ public class AttendanceFragment extends Fragment implements AttendanceAdapter.Li
         new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Delete " + course.name + "?")
                 .setMessage("This also deletes all its marked classes.")
-                .setPositiveButton("Delete", (d, w) -> AppDatabase.executor.execute(() ->
-                        AppDatabase.get(app).runInTransaction(() -> {
-                            dao.deleteRecordsOf(course.id);
-                            AppDatabase.get(app).topicDao().deleteOf(course.id);
-                            dao.deleteCourse(course);
-                        })))
+                .setPositiveButton("Delete", (d, w) -> AppDatabase.executor.execute(() -> {
+                    // Keep everything in memory so Undo can bring the whole course back
+                    final List<AttendanceRecord> oldRecords = dao.recordsOfNow(course.id);
+                    final List<Topic> oldTopics = new ArrayList<>();
+                    for (Topic t : AppDatabase.get(app).topicDao().getAllNow()) {
+                        if (t.courseId == course.id) oldTopics.add(t);
+                    }
+                    AppDatabase.get(app).runInTransaction(() -> {
+                        dao.deleteRecordsOf(course.id);
+                        AppDatabase.get(app).topicDao().deleteOf(course.id);
+                        dao.deleteCourse(course);
+                    });
+                    runUi(() -> {
+                        if (!isAdded() || getView() == null) return;
+                        Snackbar.make(b.getRoot(), "Deleted " + course.name, Snackbar.LENGTH_LONG)
+                                .setAnchorView(b.fabAdd)
+                                .setAction("Undo", u -> AppDatabase.executor.execute(() ->
+                                        AppDatabase.get(app).runInTransaction(() -> {
+                                            dao.insertCourse(course);
+                                            for (AttendanceRecord r : oldRecords) dao.insertRecord(r);
+                                            for (Topic t : oldTopics) AppDatabase.get(app).topicDao().insert(t);
+                                        })))
+                                .show();
+                    });
+                }))
                 .setNegativeButton("Cancel", null)
                 .show();
     }

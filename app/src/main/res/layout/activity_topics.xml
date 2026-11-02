@@ -58,7 +58,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:gravity="center"
-                android:text="No topics yet.\nTap Present in a class to add what was taught,\nor tap + to plan a topic."
+                android:text="&#128221;&#10;No topics yet&#10;Tap Present in a class to note what was taught,&#10;or tap + to add one."
                 android:visibility="gone" />
         </FrameLayout>
     </LinearLayout>

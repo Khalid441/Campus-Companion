@@ -75,7 +75,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:gravity="center"
-                android:text="No study sessions yet.\nTap + to plan one."
+                android:text="&#128214;&#10;No study sessions yet&#10;Tap + to plan your first one."
                 android:visibility="gone" />
         </FrameLayout>
     </LinearLayout>

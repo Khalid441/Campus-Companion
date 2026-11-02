@@ -119,7 +119,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:gravity="center"
-                android:text="No courses yet.\nTap + to add your first course."
+                android:text="&#128202;&#10;No courses yet&#10;Tap + to add your first course."
                 android:visibility="gone" />
         </FrameLayout>
     </LinearLayout>

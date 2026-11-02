@@ -58,7 +58,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:gravity="center"
-            android:text="Nothing to revise yet.\nTap + to add what you want to revise,\nor note a topic after a class."
+            android:text="&#128260;&#10;Nothing to revise yet&#10;Tap + to add something to revise,&#10;or note a topic after a class."
             android:visibility="gone" />
     </FrameLayout>
 </LinearLayout>

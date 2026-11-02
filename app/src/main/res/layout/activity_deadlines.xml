@@ -69,7 +69,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:gravity="center"
-                android:text="No deadlines yet.\nTap + to add one."
+                android:text="&#9989;&#10;No deadlines yet&#10;Tap + to add one."
                 android:visibility="gone" />
         </FrameLayout>
     </LinearLayout>

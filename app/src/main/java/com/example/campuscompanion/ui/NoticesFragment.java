@@ -63,6 +63,7 @@ public class NoticesFragment extends Fragment implements NoticeAdapter.Listener 
         adapter = new NoticeAdapter(this);
         b.recycler.setLayoutManager(new LinearLayoutManager(requireContext()));
         b.recycler.setAdapter(adapter);
+        b.recycler.setLayoutAnimation(android.view.animation.AnimationUtils.loadLayoutAnimation(requireContext(), R.anim.layout_rise));
 
         b.fabPost.setVisibility(UserSession.isCr(requireContext()) ? View.VISIBLE : View.GONE);
         b.fabPost.setOnClickListener(v -> showPostDialog());

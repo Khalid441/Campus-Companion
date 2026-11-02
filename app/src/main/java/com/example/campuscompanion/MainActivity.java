@@ -35,6 +35,7 @@ import com.example.campuscompanion.ui.AttendanceFragment;
 import com.example.campuscompanion.ui.DeadlinesFragment;
 import com.example.campuscompanion.ui.HomeFragment;
 import com.example.campuscompanion.ui.LoginActivity;
+import com.example.campuscompanion.ui.OnboardingActivity;
 import com.example.campuscompanion.ui.NoticesFragment;
 import com.example.campuscompanion.ui.StudyFragment;
 import com.google.firebase.auth.FirebaseAuth;
@@ -85,6 +86,11 @@ public class MainActivity extends AppCompatActivity {
 
         b = ActivityHostBinding.inflate(getLayoutInflater());
         setContentView(b.getRoot());
+
+        // First time on this account: short intro
+        if (savedInstanceState == null && !OnboardingActivity.isDone(this)) {
+            startActivity(new Intent(this, OnboardingActivity.class));
+        }
 
         NotificationHelper.createChannels(this);
         if (Build.VERSION.SDK_INT >= 33 && !NotificationHelper.canNotify(this)) {

@@ -144,7 +144,13 @@ public class RevisionActivity extends AppCompatActivity {
             new MaterialAlertDialogBuilder(this)
                     .setTitle("Remove from revision?")
                     .setMessage(t.title)
-                    .setPositiveButton("Remove", (d, w) -> AppDatabase.executor.execute(() -> dao.delete(t)))
+                    .setPositiveButton("Remove", (d, w) -> {
+                        AppDatabase.executor.execute(() -> dao.delete(t));
+                        com.google.android.material.snackbar.Snackbar.make(b.getRoot(), "Removed from revision", com.google.android.material.snackbar.Snackbar.LENGTH_LONG)
+                                .setAnchorView(b.fabAdd)
+                                .setAction("Undo", u -> AppDatabase.executor.execute(() -> dao.insert(t)))
+                                .show();
+                    })
                     .setNegativeButton("Cancel", null)
                     .show();
             return true;

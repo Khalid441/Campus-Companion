@@ -59,7 +59,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:gravity="center"
-                android:text="No exams yet.\nTap + to add one."
+                android:text="&#127919;&#10;No exams yet&#10;Tap + to add one and see the countdown."
                 android:visibility="gone" />
         </FrameLayout>
     </LinearLayout>

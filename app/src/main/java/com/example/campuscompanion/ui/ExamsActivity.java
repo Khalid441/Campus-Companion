@@ -69,7 +69,13 @@ public class ExamsActivity extends AppCompatActivity {
             new MaterialAlertDialogBuilder(this)
                     .setTitle("Delete this exam?")
                     .setMessage(e.subject)
-                    .setPositiveButton("Delete", (d, w) -> AppDatabase.executor.execute(() -> dao.delete(e)))
+                    .setPositiveButton("Delete", (d, w) -> {
+                        AppDatabase.executor.execute(() -> dao.delete(e));
+                        com.google.android.material.snackbar.Snackbar.make(b.getRoot(), "Exam deleted", com.google.android.material.snackbar.Snackbar.LENGTH_LONG)
+                                .setAnchorView(b.fabAdd)
+                                .setAction("Undo", u -> AppDatabase.executor.execute(() -> dao.insert(e)))
+                                .show();
+                    })
                     .setNegativeButton("Cancel", null)
                     .show();
             return true;

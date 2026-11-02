@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
@@ -87,6 +88,11 @@
         <activity android:name=".ui.RecapActivity" android:exported="false" />
         <activity android:name=".ui.SettingsActivity" android:exported="false" />
         <activity android:name=".ui.AboutActivity" android:exported="false" />
+        <activity android:name=".ui.OnboardingActivity" android:exported="false" />
+        <activity android:name=".ui.ExamPlannerActivity" android:exported="false" />
+        <activity android:name=".ui.FocusActivity" android:exported="false" />
+        <activity android:name=".ui.ResourcesActivity" android:exported="false" />
+        <activity android:name=".ui.PollsActivity" android:exported="false" />
         <activity android:name=".ui.SearchActivity" android:exported="false" android:windowSoftInputMode="adjustResize" />
         <activity android:name=".ui.ExamsActivity" android:exported="false" />
 
@@ -110,6 +116,17 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/next_deadline_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.AttendanceWidget"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/attendance_widget_info" />
         </receiver>
 
         <receiver

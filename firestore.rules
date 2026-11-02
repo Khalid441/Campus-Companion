@@ -71,6 +71,17 @@ service cloud.firestore {
                    && myProfile().groupId == groupId;
     }
 
+    // Votes on a class poll: any member may add, change or remove ONLY their own entry in `votes`,
+    // and only while the poll is open. The question and options stay CR-only.
+    match /sections/{groupId}/polls/{pollId} {
+      allow update: if request.auth != null
+        && myProfile().groupId == groupId
+        && resource.data.get('closed', false) == false
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['votes'])
+        && request.resource.data.votes.diff(resource.data.get('votes', {}))
+             .affectedKeys().hasOnly([request.auth.uid]);
+    }
+
     // "Got it" on a notice: any member of the class may add or remove ONLY their own uid
     // in the notice's ackedBy list. Nothing else on the notice can be changed by students.
     match /sections/{groupId}/notices/{noticeId} {

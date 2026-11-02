@@ -51,7 +51,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:gravity="center"
-                android:text="No classes yet.\nTap + to add one."
+                android:text="&#127979;&#10;No classes yet&#10;Tap + to add your first class."
                 android:visibility="gone" />
         </FrameLayout>
     </LinearLayout>

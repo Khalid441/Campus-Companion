@@ -50,6 +50,7 @@ public class StudyFragment extends Fragment implements StudyAdapter.Listener {
         adapter = new StudyAdapter(this);
         b.recycler.setLayoutManager(new LinearLayoutManager(requireContext()));
         b.recycler.setAdapter(adapter);
+        b.recycler.setLayoutAnimation(android.view.animation.AnimationUtils.loadLayoutAnimation(requireContext(), R.anim.layout_rise));
 
         dao.getAll().observe(getViewLifecycleOwner(), list -> {
             adapter.submitList(list);

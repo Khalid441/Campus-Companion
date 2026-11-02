@@ -97,6 +97,8 @@ public class HomeFragment extends Fragment {
     private List<RoutineEntry> todayClasses = new ArrayList<>();
     private List<com.example.campuscompanion.data.local.Exam> homeExams = new ArrayList<>();
     private Notice shownNotice;
+    private java.util.List<String> tips = new ArrayList<>();
+    private int tipIndex = 0;
 
     // Location permission (fine + coarse together)
     private final ActivityResultLauncher<String[]> locationPermission =
@@ -145,6 +147,13 @@ public class HomeFragment extends Fragment {
         NoticeManager.latest.observe(getViewLifecycleOwner(), this::renderNotice);
         b.cardNotice.setOnClickListener(v -> host().selectTab(R.id.nav_notices));
 
+        b.cardTip.setOnClickListener(v -> {
+            if (tips.size() > 1) {
+                tipIndex = (tipIndex + 1) % tips.size();
+                showTip();
+            }
+        });
+        b.cardPoll.setOnClickListener(v -> startActivity(new Intent(ctx, PollsActivity.class)));
         b.btnSearch.setOnClickListener(v -> startActivity(new Intent(ctx, SearchActivity.class)));
         b.btnSettings.setOnClickListener(v -> startActivity(new Intent(ctx, SettingsActivity.class)));
         b.cardGlance.setOnClickListener(v -> startActivity(new Intent(ctx, DayActivity.class)));
@@ -179,7 +188,66 @@ public class HomeFragment extends Fragment {
             renderNotice(NoticeManager.latest.getValue());
             renderNextClass();
             renderGoal();
+            refreshTips();
         }
+    }
+
+    /** Shows the newest open poll you have not voted on yet. */
+    @SuppressWarnings("unchecked")
+    private void refreshPoll() {
+        String section = UserSession.section(requireContext());
+        String uid = FirebaseAuth.getInstance().getUid();
+        if (section == null || uid == null) {
+            b.cardPoll.setVisibility(View.GONE);
+            return;
+        }
+        com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                .collection("sections").document(section).collection("polls")
+                .orderBy("createdAt", com.google.firebase.firestore.Query.Direction.DESCENDING)
+                .limit(5).get()
+                .addOnSuccessListener(snap -> {
+                    if (!isAdded() || getView() == null) return;
+                    for (com.google.firebase.firestore.DocumentSnapshot d : snap.getDocuments()) {
+                        if (Boolean.TRUE.equals(d.getBoolean("closed"))) continue;
+                        java.util.Map<String, Object> votes = (java.util.Map<String, Object>) d.get("votes");
+                        if (votes != null && votes.containsKey(uid)) continue;
+                        b.tvPollHome.setText(d.getString("question"));
+                        b.cardPoll.setVisibility(View.VISIBLE);
+                        return;
+                    }
+                    b.cardPoll.setVisibility(View.GONE);
+                })
+                .addOnFailureListener(e -> {
+                    if (isAdded() && getView() != null) b.cardPoll.setVisibility(View.GONE);
+                });
+    }
+
+    /** Builds the suggestion list off the main thread and shows the first one. */
+    private void refreshTips() {
+        Context app = requireContext().getApplicationContext();
+        AppDatabase.executor.execute(() -> {
+            java.util.List<String> built = com.example.campuscompanion.util.SmartTips.build(app);
+            FragmentActivity act = getActivity();
+            if (act == null) return;
+            act.runOnUiThread(() -> {
+                if (!isAdded() || getView() == null) return;
+                tips = built;
+                if (tipIndex >= tips.size()) tipIndex = 0;
+                showTip();
+            });
+        });
+    }
+
+    private void showTip() {
+        if (b == null) return;
+        if (tips.isEmpty()) {
+            b.cardTip.setVisibility(View.GONE);
+            return;
+        }
+        b.cardTip.setVisibility(View.VISIBLE);
+        b.tvTip.setText(tips.get(tipIndex));
+        b.tvTipMore.setText(tips.size() > 1 ? "Tap for next tip  (" + (tipIndex + 1) + " of " + tips.size() + ")" : "");
+        b.tvTipMore.setVisibility(tips.size() > 1 ? View.VISIBLE : View.GONE);
     }
 
     @Override
@@ -190,6 +258,8 @@ public class HomeFragment extends Fragment {
         renderNotice(NoticeManager.latest.getValue());
         renderNextClass();
         renderGoal();
+        refreshTips();
+        refreshPoll();
         NextDeadlineWidget.refresh(requireContext());
 
         // Only fetch here if permission is already granted; otherwise the
@@ -551,14 +621,17 @@ public class HomeFragment extends Fragment {
     private void buildTiles() {
         Object[][] tiles = {
                 {"My day", R.drawable.ic_tile_day, R.color.home_classes, DayActivity.class},
-                {"Deadlines", R.drawable.ic_nav_deadlines, R.color.home_deadline, DeadlinesActivity.class},
+                {"Planner", R.drawable.ic_tile_planner, R.color.home_deadline, ExamPlannerActivity.class},
+                {"Focus", R.drawable.ic_tile_focus, R.color.study_teal, FocusActivity.class},
                 {"Routine", R.drawable.ic_tile_routine, R.color.home_routine, RoutineActivity.class},
                 {"Timetable", R.drawable.ic_tile_timetable, R.color.home_timetable, TimetableActivity.class},
                 {"Calendar", R.drawable.ic_tile_calendar, R.color.home_calendar, CalendarActivity.class},
-                {"Statistics", R.drawable.ic_tile_stats, R.color.home_stats, StatsActivity.class},
                 {"Revision", R.drawable.ic_tile_revision, R.color.study_teal, RevisionActivity.class},
-                {"Recap", R.drawable.ic_tile_recap, R.color.home_attendance, RecapActivity.class},
                 {"Exams", R.drawable.ic_tile_exam, R.color.home_deadline, ExamsActivity.class},
+                {"Recap", R.drawable.ic_tile_recap, R.color.home_attendance, RecapActivity.class},
+                {"Resources", R.drawable.ic_tile_resources, R.color.home_notice, ResourcesActivity.class},
+                {"Polls", R.drawable.ic_tile_poll, R.color.home_classes, PollsActivity.class},
+                {"Statistics", R.drawable.ic_tile_stats, R.color.home_stats, StatsActivity.class},
         };
         b.tileGrid.removeAllViews();
         LinearLayout row = null;
