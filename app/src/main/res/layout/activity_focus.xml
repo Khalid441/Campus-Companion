@@ -42,7 +42,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="15 min" />
+            android:text="15" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnLen25"
@@ -50,7 +50,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="25 min" />
+            android:text="25" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnLen45"
@@ -58,7 +58,15 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="45 min" />
+            android:text="45" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnLenCustom"
+            style="?attr/materialButtonOutlinedStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1.4"
+            android:text="Custom" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnLenBreak"
@@ -66,8 +74,17 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Break 5" />
+            android:text="Break" />
     </com.google.android.material.button.MaterialButtonToggleGroup>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:gravity="center"
+        android:text="Tap the time to set your own minutes"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        android:textSize="12sp" />
 
     <FrameLayout
         android:layout_width="match_parent"
@@ -89,6 +106,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Timer. Tap to set the minutes"
             android:text="25:00"
             android:textSize="52sp"
             android:textStyle="bold" />
