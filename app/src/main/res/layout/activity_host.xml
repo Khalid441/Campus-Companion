@@ -11,6 +11,20 @@
         android:layout_height="0dp"
         android:layout_weight="1" />
 
+    <TextView
+        android:id="@+id/tvOffline"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#FF37474F"
+        android:gravity="center"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="6dp"
+        android:text="You're offline. Attendance, notes and deadlines still work."
+        android:textColor="#FFFFFFFF"
+        android:textSize="12sp"
+        android:visibility="gone"
+        android:accessibilityLiveRegion="polite" />
+
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNav"
         android:layout_width="match_parent"

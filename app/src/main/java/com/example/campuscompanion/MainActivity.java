@@ -3,7 +3,12 @@ package com.example.campuscompanion;
 import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.Bundle;
 
 import androidx.activity.OnBackPressedCallback;
@@ -24,6 +29,8 @@ import com.example.campuscompanion.reminder.RevisionScheduler;
 import com.example.campuscompanion.reminder.StudyReminderScheduler;
 import com.example.campuscompanion.sync.NoticeManager;
 import com.example.campuscompanion.sync.SyncManager;
+import com.example.campuscompanion.ui.AddDeadlineActivity;
+import com.example.campuscompanion.ui.SearchActivity;
 import com.example.campuscompanion.ui.AttendanceFragment;
 import com.example.campuscompanion.ui.DeadlinesFragment;
 import com.example.campuscompanion.ui.HomeFragment;
@@ -44,6 +51,14 @@ public class MainActivity extends AppCompatActivity {
 
     private ActivityHostBinding b;
     private int currentTab = R.id.nav_home;
+
+    public static final String ACTION_ADD_DEADLINE = "com.example.campuscompanion.action.ADD_DEADLINE";
+    public static final String ACTION_MARK_ATTENDANCE = "com.example.campuscompanion.action.MARK_ATTENDANCE";
+    public static final String ACTION_SEARCH = "com.example.campuscompanion.action.SEARCH";
+
+    private final Handler ui = new Handler(Looper.getMainLooper());
+    private ConnectivityManager.NetworkCallback netCallback;
+    private boolean wasOffline = false;
 
     private final ActivityResultLauncher<String> notificationPermission =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> { });
@@ -107,6 +122,8 @@ public class MainActivity extends AppCompatActivity {
         b.bottomNav.setSelectedItemId(currentTab);
         showTab(currentTab, false);
 
+        handleAction(getIntent());
+
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
@@ -126,6 +143,86 @@ public class MainActivity extends AppCompatActivity {
         setIntent(intent);
         int wanted = intent.getIntExtra(EXTRA_TAB, 0);
         if (b != null && wanted != 0) b.bottomNav.setSelectedItemId(wanted);
+        handleAction(intent);
+    }
+
+    /** App-icon shortcuts (long-press the launcher icon). */
+    private void handleAction(Intent intent) {
+        if (b == null || intent == null || intent.getAction() == null) return;
+        String action = intent.getAction();
+        intent.setAction(null);   // do not repeat after rotation
+        if (ACTION_ADD_DEADLINE.equals(action)) {
+            startActivity(new Intent(this, AddDeadlineActivity.class));
+        } else if (ACTION_MARK_ATTENDANCE.equals(action)) {
+            b.bottomNav.setSelectedItemId(R.id.nav_attendance);
+        } else if (ACTION_SEARCH.equals(action)) {
+            startActivity(new Intent(this, SearchActivity.class));
+        }
+    }
+
+    // ---- offline banner ----
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (b == null) return;
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (cm == null) return;
+        showOnline(isOnline(cm), false);
+        netCallback = new ConnectivityManager.NetworkCallback() {
+            @Override public void onAvailable(Network network) { ui.post(() -> showOnline(true, true)); }
+            @Override public void onLost(Network network) {
+                ui.post(() -> {
+                    ConnectivityManager c = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+                    if (c != null) showOnline(isOnline(c), true);
+                });
+            }
+        };
+        try {
+            cm.registerDefaultNetworkCallback(netCallback);
+        } catch (Exception e) {
+            netCallback = null;
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        ui.removeCallbacksAndMessages(null);
+        if (netCallback != null) {
+            try {
+                ((ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE))
+                        .unregisterNetworkCallback(netCallback);
+            } catch (Exception ignored) { }
+            netCallback = null;
+        }
+    }
+
+    private static boolean isOnline(ConnectivityManager cm) {
+        Network n = cm.getActiveNetwork();
+        if (n == null) return false;
+        NetworkCapabilities caps = cm.getNetworkCapabilities(n);
+        return caps != null && caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
+    }
+
+    private void showOnline(boolean online, boolean announce) {
+        if (b == null) return;
+        ui.removeCallbacksAndMessages(null);
+        if (!online) {
+            wasOffline = true;
+            b.tvOffline.setBackgroundColor(0xFF37474F);
+            b.tvOffline.setText("You're offline. Attendance, notes and deadlines still work.");
+            b.tvOffline.setVisibility(android.view.View.VISIBLE);
+        } else if (wasOffline && announce) {
+            wasOffline = false;
+            b.tvOffline.setBackgroundColor(0xFF2E7D32);
+            b.tvOffline.setText("Back online");
+            b.tvOffline.setVisibility(android.view.View.VISIBLE);
+            ui.postDelayed(() -> { if (b != null) b.tvOffline.setVisibility(android.view.View.GONE); }, 2000);
+        } else {
+            wasOffline = false;
+            b.tvOffline.setVisibility(android.view.View.GONE);
+        }
     }
 
     @Override
@@ -166,7 +263,7 @@ public class MainActivity extends AppCompatActivity {
         } else if (target.isHidden()) {
             tx.show(target);
         }
-        tx.commit();
+        tx.commitNow();   // now, so a second call finds this fragment instead of adding a twin
         currentTab = navId;
     }
 }

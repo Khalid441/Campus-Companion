@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="sc_deadline"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_deadline"
+        android:shortcutShortLabel="@string/sc_deadline_short"
+        android:shortcutLongLabel="@string/sc_deadline_long">
+        <intent
+            android:action="com.example.campuscompanion.action.ADD_DEADLINE"
+            android:targetClass="com.example.campuscompanion.MainActivity"
+            android:targetPackage="com.example.campuscompanion" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="sc_attendance"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_attendance"
+        android:shortcutShortLabel="@string/sc_attendance_short"
+        android:shortcutLongLabel="@string/sc_attendance_long">
+        <intent
+            android:action="com.example.campuscompanion.action.MARK_ATTENDANCE"
+            android:targetClass="com.example.campuscompanion.MainActivity"
+            android:targetPackage="com.example.campuscompanion" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="sc_search"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_search"
+        android:shortcutShortLabel="@string/sc_search_short"
+        android:shortcutLongLabel="@string/sc_search_long">
+        <intent
+            android:action="com.example.campuscompanion.action.SEARCH"
+            android:targetClass="com.example.campuscompanion.MainActivity"
+            android:targetPackage="com.example.campuscompanion" />
+    </shortcut>
+</shortcuts>

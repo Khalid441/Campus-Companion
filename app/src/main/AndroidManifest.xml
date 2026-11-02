@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
@@ -60,6 +61,9 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
         </activity>
 
         <activity android:name=".ui.RegisterActivity" android:exported="false" />
@@ -83,6 +87,7 @@
         <activity android:name=".ui.RecapActivity" android:exported="false" />
         <activity android:name=".ui.SettingsActivity" android:exported="false" />
         <activity android:name=".ui.AboutActivity" android:exported="false" />
+        <activity android:name=".ui.SearchActivity" android:exported="false" android:windowSoftInputMode="adjustResize" />
         <activity android:name=".ui.ExamsActivity" android:exported="false" />
 
         <receiver android:name=".receiver.ReminderReceiver" android:exported="false" />

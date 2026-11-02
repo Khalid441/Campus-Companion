@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">Campus Companion</string>
+    <string name="sc_deadline_short">Add deadline</string>
+    <string name="sc_deadline_long">Add a new deadline</string>
+    <string name="sc_attendance_short">Attendance</string>
+    <string name="sc_attendance_long">Mark attendance</string>
+    <string name="sc_search_short">Search</string>
+    <string name="sc_search_long">Search the app</string>
 </resources>

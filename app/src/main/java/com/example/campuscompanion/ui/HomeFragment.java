@@ -138,13 +138,14 @@ public class HomeFragment extends Fragment {
         int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
         String hello = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
         b.tvGreeting.setText(hello + (name.isEmpty() ? "" : ",\n" + name));
-        b.tvSection.setText(UserSession.label(ctx)
-                + (UserSession.isCr(ctx) ? "  \u2022  Class representative" : ""));
+        b.tvSection.setText(UserSession.label(ctx));
+        b.tvRole.setVisibility(UserSession.isCr(ctx) ? View.VISIBLE : View.GONE);
 
         // Notices, study and attendance are tabs: switch inside the same screen (no new window)
         NoticeManager.latest.observe(getViewLifecycleOwner(), this::renderNotice);
         b.cardNotice.setOnClickListener(v -> host().selectTab(R.id.nav_notices));
 
+        b.btnSearch.setOnClickListener(v -> startActivity(new Intent(ctx, SearchActivity.class)));
         b.btnSettings.setOnClickListener(v -> startActivity(new Intent(ctx, SettingsActivity.class)));
         b.cardGlance.setOnClickListener(v -> startActivity(new Intent(ctx, DayActivity.class)));
         b.btnNoticeAck.setOnClickListener(v -> ackNotice());

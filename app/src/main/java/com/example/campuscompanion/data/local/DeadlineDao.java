@@ -32,6 +32,9 @@ public interface DeadlineDao {
     @Query("SELECT * FROM deadlines WHERE done = 0")
     List<Deadline> getPending();
 
+    @Query("SELECT * FROM deadlines")
+    List<Deadline> getAllNow();
+
     @Query("SELECT * FROM deadlines WHERE done = 0 ORDER BY dueAt ASC LIMIT 1")
     LiveData<Deadline> getNextPending();
 
