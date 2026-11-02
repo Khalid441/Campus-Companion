@@ -6,6 +6,14 @@
 
     <style name="Theme.CampusCompanion" parent="Base.Theme.CampusCompanion" />
 
+    <!-- Invisible hop used by the old tab entry points (they forward to MainActivity) -->
+    <style name="Theme.CampusCompanion.Trampoline" parent="Theme.CampusCompanion">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
+
     <!-- Launch screen: logo on deep purple, then switches to the normal theme -->
     <style name="Theme.CampusCompanion.Splash" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">#2E1F7A</item>
