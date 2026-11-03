@@ -1,6 +1,10 @@
 package com.example.campuscompanion.ui;
 
+import android.app.NotificationManager;
 import android.content.Context;
+import android.content.Intent;
+import android.provider.Settings;
+import androidx.activity.OnBackPressedCallback;
 import android.content.SharedPreferences;
 import android.text.InputType;
 import android.widget.EditText;
@@ -43,6 +47,11 @@ public class FocusActivity extends AppCompatActivity {
 
     private static final String KEY_CUSTOM = "focus_custom_min";
     private static final String KEY_BREAK = "focus_break_min";
+    private static final String KEY_DND = "focus_dnd";
+    private static final String KEY_LOCK = "focus_lock";
+    private static final String KEY_PREV_FILTER = "focus_prev_filter";   // set only while we changed it
+    private boolean dndActive = false;
+    private boolean lockActive = false;
     private int customMin = 30;
     private int breakMin = 5;
 
@@ -89,6 +98,23 @@ public class FocusActivity extends AppCompatActivity {
             if (!running && b.toggleLength.getCheckedButtonId() == R.id.btnLenBreak) askMinutes();
         });
         b.tvTimer.setOnClickListener(v -> { if (!running) askMinutes(); });
+
+        restoreLeftoverFilter();
+        b.swDnd.setChecked(prefs().getBoolean(KEY_DND, false));
+        b.swLock.setChecked(prefs().getBoolean(KEY_LOCK, false));
+        b.swDnd.setOnCheckedChangeListener((bt, on) -> prefs().edit().putBoolean(KEY_DND, on).apply());
+        b.swLock.setOnCheckedChangeListener((bt, on) -> prefs().edit().putBoolean(KEY_LOCK, on).apply());
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override public void handleOnBackPressed() {
+                if (!running || isBreak) { finish(); return; }
+                new MaterialAlertDialogBuilder(FocusActivity.this)
+                        .setTitle("Stop this focus session?")
+                        .setMessage("The minutes done so far are saved.")
+                        .setPositiveButton("Stop", (d, w) -> { reset(); finish(); })
+                        .setNegativeButton("Keep going", null)
+                        .show();
+            }
+        });
 
         b.btnFocusStart.setOnClickListener(v -> {
             if (running) pause(); else start();
@@ -162,11 +188,28 @@ public class FocusActivity extends AppCompatActivity {
     }
 
     private void start() {
+        // Deep focus needs Do Not Disturb access once; ask before starting
+        if (!isBreak && b.swDnd.isChecked() && !policyGranted()) {
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle("Allow Do Not Disturb")
+                    .setMessage("To silence calls and notifications during a session, switch on "
+                            + "Campus Companion in the next screen, then come back and press Start. "
+                            + "Alarms still ring, and the setting returns to normal when the session ends.")
+                    .setPositiveButton("Open settings", (d, w) -> startActivity(
+                            new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)))
+                    .setNegativeButton("Focus without it", (d, w) -> {
+                        b.swDnd.setChecked(false);
+                        start();
+                    })
+                    .show();
+            return;
+        }
         if (remainingMs <= 0) remainingMs = totalMs;
         running = true;
         endAt = System.currentTimeMillis() + remainingMs;
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         b.spFocusCourse.setEnabled(false);
+        if (!isBreak) enterDeepFocus();
         schedule();
         render();
     }
@@ -197,7 +240,60 @@ public class FocusActivity extends AppCompatActivity {
         showStats();
     }
 
+    // ---------------------------------------------------------------------
+    // Deep focus: Do Not Disturb (alarms only) and screen pinning
+    // ---------------------------------------------------------------------
+
+    private boolean policyGranted() {
+        NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        return nm != null && nm.isNotificationPolicyAccessGranted();
+    }
+
+    private void enterDeepFocus() {
+        NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (b.swDnd.isChecked() && nm != null && nm.isNotificationPolicyAccessGranted() && !dndActive) {
+            // Remember the user's own setting so it can always be put back, even after a crash
+            prefs().edit().putInt(KEY_PREV_FILTER, nm.getCurrentInterruptionFilter()).apply();
+            nm.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALARMS);
+            dndActive = true;
+        }
+        if (b.swLock.isChecked() && !lockActive) {
+            try {
+                startLockTask();
+                lockActive = true;
+            } catch (Exception ignored) { }
+        }
+    }
+
+    private void leaveDeepFocus() {
+        if (dndActive) {
+            NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            if (nm != null && nm.isNotificationPolicyAccessGranted()) {
+                nm.setInterruptionFilter(prefs().getInt(KEY_PREV_FILTER, NotificationManager.INTERRUPTION_FILTER_ALL));
+            }
+            prefs().edit().remove(KEY_PREV_FILTER).apply();
+            dndActive = false;
+        }
+        if (lockActive) {
+            try {
+                stopLockTask();
+            } catch (Exception ignored) { }
+            lockActive = false;
+        }
+    }
+
+    /** If the app was killed during a session, give the user their normal phone settings back. */
+    private void restoreLeftoverFilter() {
+        if (!prefs().contains(KEY_PREV_FILTER) || running) return;
+        NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm != null && nm.isNotificationPolicyAccessGranted()) {
+            nm.setInterruptionFilter(prefs().getInt(KEY_PREV_FILTER, NotificationManager.INTERRUPTION_FILTER_ALL));
+        }
+        prefs().edit().remove(KEY_PREV_FILTER).apply();
+    }
+
     private void stopTimer() {
+        leaveDeepFocus();
         running = false;
         if (timer != null) timer.cancel();
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -269,6 +365,7 @@ public class FocusActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         if (timer != null) timer.cancel();
+        leaveDeepFocus();
         super.onDestroy();
     }
 }
