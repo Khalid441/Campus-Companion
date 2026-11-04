@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/** Semester planner on the KUET 4.0 scale: SGPA, new CGPA, and the grade needed for a target. */
+/** Semester planner on the standard 4.0 scale: SGPA, new CGPA, and the grade needed for a target. */
 public class GpaActivity extends AppCompatActivity {
 
     private ActivityGpaBinding b;

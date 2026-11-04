@@ -85,10 +85,11 @@ This project was built for the Android part of the course plan (Weeks 8–13). T
 | 📶 **Offline banner** | A thin bar says *"You're offline"* and turns green *"Back online"* when the connection returns. |
 | ⌨️ **Launcher shortcuts** | Long-press the app icon: *Add deadline*, *Attendance*, *Search*. |
 | 🏅 **Badges, XP & levels** | Earn XP for classes, revisions, focus minutes, deadlines and mastered topics; 13 badges; a level card on Home. Optional anonymous class leaderboard (alias only, off by default). |
-| 🎓 **GPA / CGPA calculator** | KUET 4.0 scale, semester SGPA, running CGPA and a "what do I need" goal calculator. |
+| 🎓 **GPA / CGPA calculator** | 4.0 scale, semester SGPA, running CGPA and a "what do I need" goal calculator. |
 | 🔥 **Study heatmap** | 13-week activity grid on the weekly recap. |
 | 🎙️ **Voice input** | Say *"Assignment 3 due Friday 5 pm"* and a prefilled deadline opens. |
 | 📷 **Scan to add** | On-device OCR reads a routine or notice and proposes entries you confirm. |
+| 🗓️ **Dynamic exam planner** | Plan sized to your daily study time, revision progress and workload per exam, tick topics off, add topics, start focus. |
 | 📅 **Calendar export** | Deadlines, exams and the weekly routine as a standard `.ics` file. |
 | 🧩 **Three widgets** | *Next deadline*, *Today*, and *Attendance* (your lowest course with a one-tap **Present today**). |
 | 👋 **Onboarding and demo data** | A three-page intro on first launch and a **Load sample data** button (removable in Settings; demo items are tagged "[Demo]"). |

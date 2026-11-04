@@ -2,7 +2,7 @@ package com.example.campuscompanion.util;
 
 import java.util.List;
 
-/** Grade points and GPA maths on the KUET 4.0 scale. Pure Java, no Android classes. */
+/** Grade points and GPA maths on the standard 4.0 scale. Pure Java, no Android classes. */
 public final class GpaCalc {
     private GpaCalc() { }
 

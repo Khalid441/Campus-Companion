@@ -23,7 +23,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:text="KUET 4.0 scale: A+ 4.00 down to F 0.00. Check your department if yours differs."
+            android:text="4.0 scale: A+ 4.00 down to F 0.00. Check your university's grade table if it differs."
             android:textColor="?attr/colorOnSurfaceVariant"
             android:textSize="13sp" />
 
