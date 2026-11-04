@@ -33,6 +33,9 @@ import java.util.Map;
 public class AddDeadlineActivity extends AppCompatActivity {
 
     public static final String EXTRA_POST_TO_SECTION = "post_to_section";
+    /** Filled in by voice input and the photo scanner; the student still checks it before saving. */
+    public static final String EXTRA_PREFILL_TITLE = "prefill_title";
+    public static final String EXTRA_PREFILL_DUE = "prefill_due";
 
     private static final String[] PRIORITY_LABELS = {"High", "Medium", "Low"};
     private static final String[] PRIORITY_VALUES = {Deadline.HIGH, Deadline.MEDIUM, Deadline.LOW};
@@ -63,6 +66,11 @@ public class AddDeadlineActivity extends AppCompatActivity {
         cal.add(Calendar.DAY_OF_MONTH, 1);
         cal.set(Calendar.SECOND, 0);
         cal.set(Calendar.MILLISECOND, 0);
+
+        String prefillTitle = getIntent().getStringExtra(EXTRA_PREFILL_TITLE);
+        if (prefillTitle != null) b.etTitle.setText(prefillTitle);
+        long prefillDue = getIntent().getLongExtra(EXTRA_PREFILL_DUE, 0);
+        if (prefillDue > 0) cal.setTimeInMillis(prefillDue);
 
         b.spPriority.setAdapter(new ArrayAdapter<>(this,
                 android.R.layout.simple_spinner_dropdown_item, PRIORITY_LABELS));

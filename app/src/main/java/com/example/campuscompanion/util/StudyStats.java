@@ -12,6 +12,7 @@ import java.util.Set;
 public final class StudyStats {
     private static final String KEY_REVISIONS = "revisions";
     private static final String KEY_GOAL = "goal";
+    private static final String KEY_TOTAL = "revisions_total";
     public static final int DEFAULT_GOAL = 5;
     /** 0 means "no goal". */
     public static final int[] GOAL_CHOICES = {0, 1, 2, 3, 5, 7, 10, 15, 20};   // (no longer used by the dialog)
@@ -28,7 +29,7 @@ public final class StudyStats {
     public static void recordRevision(Context c) {
         SharedPreferences p = prefs(c);
         long now = System.currentTimeMillis();
-        long keepFrom = DateUtil.addDays(now, -90);
+        long keepFrom = DateUtil.addDays(now, -120);
         Set<String> out = new HashSet<>();
         for (String s : p.getStringSet(KEY_REVISIONS, new HashSet<>())) {
             try {
@@ -36,7 +37,9 @@ public final class StudyStats {
             } catch (NumberFormatException ignored) { }
         }
         out.add(String.valueOf(now));
-        p.edit().putStringSet(KEY_REVISIONS, out).apply();
+        p.edit().putStringSet(KEY_REVISIONS, out)
+                .putInt(KEY_TOTAL, p.getInt(KEY_TOTAL, 0) + 1)
+                .apply();
     }
 
     private static Set<Long> days(Context c) {
@@ -72,6 +75,26 @@ public final class StudyStats {
             day = DateUtil.addDays(day, -1);
         }
         return n;
+    }
+
+    /** Revisions ever recorded on this phone for this account. */
+    public static int total(Context c) {
+        SharedPreferences p = prefs(c);
+        // Accounts that revised before the counter existed: use what the recent list holds
+        return Math.max(p.getInt(KEY_TOTAL, 0), p.getStringSet(KEY_REVISIONS, new HashSet<>()).size());
+    }
+
+    /** Revisions per day (key = start of the day) over the last 120 days. */
+    public static java.util.Map<Long, Integer> revisionsPerDay(Context c) {
+        java.util.Map<Long, Integer> map = new java.util.HashMap<>();
+        for (String s : prefs(c).getStringSet(KEY_REVISIONS, new HashSet<>())) {
+            try {
+                long day = DateUtil.startOfDay(Long.parseLong(s));
+                Integer n = map.get(day);
+                map.put(day, n == null ? 1 : n + 1);
+            } catch (NumberFormatException ignored) { }
+        }
+        return map;
     }
 
     public static int goal(Context c) {

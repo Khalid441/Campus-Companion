@@ -16,6 +16,9 @@
 
     <!-- Lets the Facebook login find the Facebook app on Android 11+ -->
     <queries>
+        <intent>
+            <action android:name="android.speech.action.RECOGNIZE_SPEECH" />
+        </intent>
         <package android:name="com.facebook.katana" />
     </queries>
 
@@ -94,6 +97,9 @@
         <activity android:name=".ui.FocusActivity" android:exported="false" />
         <activity android:name=".ui.ResourcesActivity" android:exported="false" />
         <activity android:name=".ui.PollsActivity" android:exported="false" />
+        <activity android:name=".ui.GpaActivity" android:exported="false" android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".ui.AchievementsActivity" android:exported="false" />
+        <activity android:name=".ui.ScanActivity" android:exported="false" />
         <activity android:name=".ui.SearchActivity" android:exported="false" android:windowSoftInputMode="adjustResize" />
         <activity android:name=".ui.ExamsActivity" android:exported="false" />
 

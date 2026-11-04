@@ -50,6 +50,20 @@ public final class FocusStats {
         return total;
     }
 
+    /** Minutes focused on one day (pass the start of that day). */
+    public static int forDay(Context c, long dayStart) {
+        return prefs(c).getInt("day_" + DateUtil.startOfDay(dayStart), 0);
+    }
+
+    /** All-time focus minutes. */
+    public static int total(Context c) {
+        int total = 0;
+        for (java.util.Map.Entry<String, ?> e : prefs(c).getAll().entrySet()) {
+            if (e.getKey().startsWith("day_") && e.getValue() instanceof Integer) total += (Integer) e.getValue();
+        }
+        return total;
+    }
+
     public static String format(int minutes) {
         if (minutes < 60) return minutes + " min";
         int h = minutes / 60, m = minutes % 60;

@@ -81,6 +81,7 @@ public class SettingsActivity extends AppCompatActivity {
         b.btnLogout.setOnClickListener(v -> logout());
         b.btnAbout.setOnClickListener(v -> startActivity(new Intent(this, AboutActivity.class)));
         b.btnGoal.setOnClickListener(v -> chooseGoal());
+        b.btnCalendar.setOnClickListener(v -> CalendarExport.show(this));
         b.btnSampleLoad.setOnClickListener(v -> SampleData.load(this, () -> runOnUiThread(() ->
                 Toast.makeText(this, "Sample data added", Toast.LENGTH_SHORT).show())));
         b.btnSampleRemove.setOnClickListener(v -> SampleData.remove(this, () -> runOnUiThread(() ->

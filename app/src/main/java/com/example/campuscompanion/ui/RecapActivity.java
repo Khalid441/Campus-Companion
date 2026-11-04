@@ -105,6 +105,53 @@ public class RecapActivity extends AppCompatActivity {
                 upcoming == 0 ? "Nothing due in the next 7 days."
                         : upcoming + (upcoming == 1 ? " deadline" : " deadlines") + " due in the next 7 days.",
                 getColor(R.color.home_deadline), DeadlinesActivity.class);
+
+        addHeatmap(now);
+    }
+
+    /** 13 weeks of activity: classes attended, revisions and focus time. */
+    private void addHeatmap(long now) {
+        final int cells = com.example.campuscompanion.view.HeatmapView.WEEKS * 7;
+        long today = DateUtil.startOfDay(now);
+        long thisWeek = DateUtil.addDays(today, -(DateUtil.dayOfWeek(today) - 1));   // Sunday
+        long start = DateUtil.addDays(thisWeek, -(com.example.campuscompanion.view.HeatmapView.WEEKS - 1) * 7);
+
+        java.util.Map<Long, Integer> revisions = com.example.campuscompanion.util.StudyStats.revisionsPerDay(this);
+        java.util.Map<Long, Integer> classes = new java.util.HashMap<>();
+        for (AttendanceRecord r : records) {
+            if (r.status != AttendanceRecord.PRESENT) continue;
+            Integer n = classes.get(r.date);
+            classes.put(r.date, n == null ? 1 : n + 1);
+        }
+
+        final int[] levels = new int[cells];
+        final String[] details = new String[cells];
+        int firstFuture = cells;
+        int activeDays = 0;
+        SimpleDateFormat f = new SimpleDateFormat("EEE d MMM", Locale.getDefault());
+        for (int i = 0; i < cells; i++) {
+            long day = DateUtil.addDays(start, i);
+            if (day > today) {
+                firstFuture = Math.min(firstFuture, i);
+                continue;
+            }
+            int c = classes.containsKey(day) ? classes.get(day) : 0;
+            int rv = revisions.containsKey(day) ? revisions.get(day) : 0;
+            int focus = com.example.campuscompanion.util.FocusStats.forDay(this, day);
+            int score = c * 2 + rv * 2 + Math.min(4, focus / 15);
+            levels[i] = score == 0 ? 0 : score <= 2 ? 1 : score <= 4 ? 2 : score <= 7 ? 3 : 4;
+            if (score > 0) activeDays++;
+            details[i] = f.format(new Date(day)) + ": " + c + (c == 1 ? " class" : " classes") + ", "
+                    + rv + (rv == 1 ? " revision" : " revisions") + ", " + focus + " min focus";
+        }
+
+        com.example.campuscompanion.databinding.ItemHeatmapBinding h =
+                com.example.campuscompanion.databinding.ItemHeatmapBinding.inflate(LayoutInflater.from(this), b.list, false);
+        h.tvHeatBig.setText(activeDays + (activeDays == 1 ? " active day" : " active days"));
+        h.heatmap.setLevels(levels, firstFuture);
+        h.heatmap.setContentDescription("Study activity over the last 13 weeks: " + activeDays + " active days");
+        h.heatmap.setOnCellListener(index -> h.tvHeatDetail.setText(details[index]));
+        b.list.addView(h.getRoot());
     }
 
     private void addCard(String label, String big, String detail, int color, Class<?> target) {

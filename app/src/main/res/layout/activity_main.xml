@@ -70,6 +70,15 @@
             </LinearLayout>
 
             <ImageButton
+                android:id="@+id/btnVoice"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Add a deadline by voice"
+                android:src="@drawable/ic_mic"
+                app:tint="?attr/colorOnSurfaceVariant" />
+
+            <ImageButton
                 android:id="@+id/btnSearch"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
@@ -172,6 +181,52 @@
         </com.google.android.material.card.MaterialCardView>
 
         <!-- Latest notice from the CR (compact) -->
+        <!-- Level -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardLevel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:clickable="true"
+            android:focusable="true"
+            app:cardBackgroundColor="?attr/colorSurfaceVariant"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/home_notice"
+            app:strokeWidth="1.5dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:id="@+id/tvLevelHome"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="&#11088; Level 1"
+                    android:textColor="@color/home_notice"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <com.google.android.material.progressindicator.LinearProgressIndicator
+                    android:id="@+id/levelBarHome"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:max="100" />
+
+                <TextView
+                    android:id="@+id/tvLevelDetail"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
         <!-- Smart tip -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardTip"

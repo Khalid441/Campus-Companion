@@ -113,13 +113,18 @@ public class DeadlinesFragment extends Fragment implements DeadlineAdapter.Liste
 
         setupSwipe();
 
-        b.btnExport.setOnClickListener(v -> {
-            if (all.isEmpty()) {
-                Toast.makeText(requireContext(), "No deadlines to export", Toast.LENGTH_SHORT).show();
-            } else {
-                createCsv.launch("campus_deadlines.csv");
-            }
-        });
+        b.btnExport.setOnClickListener(v -> new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Export")
+                .setItems(new String[]{"Add to calendar (.ics)", "Spreadsheet (.csv)"}, (dlg, which) -> {
+                    if (which == 0) {
+                        CalendarExport.show(requireActivity());
+                    } else if (all.isEmpty()) {
+                        Toast.makeText(requireContext(), "No deadlines to export", Toast.LENGTH_SHORT).show();
+                    } else {
+                        createCsv.launch("campus_deadlines.csv");
+                    }
+                })
+                .show());
     }
 
     /** Swipe right = done / not done, swipe left = delete (both with Undo). */

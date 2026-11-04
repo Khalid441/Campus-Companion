@@ -82,6 +82,21 @@ service cloud.firestore {
              .affectedKeys().hasOnly([request.auth.uid]);
     }
 
+    // Optional anonymous leaderboard: each member may write ONLY their own entry (an alias, a level
+    // and an XP number) and may remove it again. Everyone in the class can read the list.
+    match /sections/{groupId}/leaderboard/{uid} {
+      allow create, update: if request.auth != null
+        && request.auth.uid == uid
+        && myProfile().groupId == groupId
+        && request.resource.data.keys().hasOnly(['xp', 'level', 'alias', 'updatedAt'])
+        && request.resource.data.xp is int && request.resource.data.xp >= 0 && request.resource.data.xp < 10000000
+        && request.resource.data.level is int
+        && request.resource.data.alias is string && request.resource.data.alias.size() <= 40;
+      allow delete: if request.auth != null
+        && request.auth.uid == uid
+        && myProfile().groupId == groupId;
+    }
+
     // "Got it" on a notice: any member of the class may add or remove ONLY their own uid
     // in the notice's ackedBy list. Nothing else on the notice can be changed by students.
     match /sections/{groupId}/notices/{noticeId} {

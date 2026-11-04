@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingHorizontal="24dp"
+    android:paddingTop="8dp">
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilGName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Course name">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etGName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textCapWords" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilGCredits"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:hint="Credits (for example 3 or 1.5)">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etGCredits"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="Grade"
+        android:textSize="13sp" />
+
+    <Spinner
+        android:id="@+id/spGGrade"
+        android:layout_width="match_parent"
+        android:layout_height="48dp" />
+</LinearLayout>

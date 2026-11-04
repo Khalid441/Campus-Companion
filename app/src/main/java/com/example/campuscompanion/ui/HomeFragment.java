@@ -110,6 +110,43 @@ public class HomeFragment extends Fragment {
                 }
             });
 
+    // Voice input: "Assignment 3 due Friday 5 pm" opens the deadline form already filled in
+    private final ActivityResultLauncher<Intent> voiceLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+                if (result.getResultCode() != android.app.Activity.RESULT_OK || result.getData() == null) return;
+                java.util.ArrayList<String> heard =
+                        result.getData().getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS);
+                if (heard == null || heard.isEmpty() || !isAdded()) return;
+                long now = System.currentTimeMillis();
+                String text = heard.get(0);
+                com.example.campuscompanion.util.NaturalDate.Result parsed =
+                        com.example.campuscompanion.util.NaturalDate.parse(text, now);
+                for (String alt : heard) {                      // prefer an alternative that has a date
+                    com.example.campuscompanion.util.NaturalDate.Result p =
+                            com.example.campuscompanion.util.NaturalDate.parse(alt, now);
+                    if (p.hasDate) { text = alt; parsed = p; break; }
+                }
+                Toast.makeText(requireContext(), "Heard: " + text, Toast.LENGTH_LONG).show();
+                Intent i = new Intent(requireContext(), AddDeadlineActivity.class)
+                        .putExtra(AddDeadlineActivity.EXTRA_PREFILL_TITLE,
+                                parsed.title.isEmpty() ? text : parsed.title)
+                        .putExtra(AddDeadlineActivity.EXTRA_PREFILL_DUE, parsed.millis);
+                startActivity(i);
+            });
+
+    private void startVoice() {
+        Intent i = new Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+                .putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                        android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                .putExtra(android.speech.RecognizerIntent.EXTRA_PROMPT, "Say: Assignment 3 due Friday 5 pm")
+                .putExtra(android.speech.RecognizerIntent.EXTRA_MAX_RESULTS, 3);
+        try {
+            voiceLauncher.launch(i);
+        } catch (android.content.ActivityNotFoundException e) {
+            Toast.makeText(requireContext(), "Voice input is not available on this phone", Toast.LENGTH_LONG).show();
+        }
+    }
+
     private MainActivity host() {
         return (MainActivity) requireActivity();
     }
@@ -153,7 +190,9 @@ public class HomeFragment extends Fragment {
                 showTip();
             }
         });
+        b.cardLevel.setOnClickListener(v -> startActivity(new Intent(ctx, AchievementsActivity.class)));
         b.cardPoll.setOnClickListener(v -> startActivity(new Intent(ctx, PollsActivity.class)));
+        b.btnVoice.setOnClickListener(v -> startVoice());
         b.btnSearch.setOnClickListener(v -> startActivity(new Intent(ctx, SearchActivity.class)));
         b.btnSettings.setOnClickListener(v -> startActivity(new Intent(ctx, SettingsActivity.class)));
         b.cardGlance.setOnClickListener(v -> startActivity(new Intent(ctx, DayActivity.class)));
@@ -190,6 +229,30 @@ public class HomeFragment extends Fragment {
             renderGoal();
             refreshTips();
         }
+    }
+
+    /** Level card on Home; also announces new badges and keeps the (optional) leaderboard up to date. */
+    private void refreshLevel() {
+        Context app = requireContext().getApplicationContext();
+        AppDatabase.executor.execute(() -> {
+            com.example.campuscompanion.util.Gamification.Snapshot s =
+                    com.example.campuscompanion.util.Gamification.compute(app);
+            com.example.campuscompanion.util.Leaderboard.uploadIfOn(app, s);
+            FragmentActivity act = getActivity();
+            if (act == null) return;
+            act.runOnUiThread(() -> {
+                if (!isAdded() || getView() == null) return;
+                b.tvLevelHome.setText("\u2B50 Level " + s.level + "  \u2022  "
+                        + com.example.campuscompanion.util.LevelMath.title(s.level));
+                int span = Math.max(1, s.xpNextLevel - s.xpThisLevel);
+                b.levelBarHome.setProgress(Math.min(100, (s.xp - s.xpThisLevel) * 100 / span));
+                b.tvLevelDetail.setText(s.xp + " XP  \u2022  " + (s.xpNextLevel - s.xp)
+                        + " to level " + (s.level + 1) + "  \u2022  " + s.unlocked.size() + " badges  \u203A");
+                for (com.example.campuscompanion.util.Gamification.Badge nb : s.newlyUnlocked) {
+                    Toast.makeText(requireContext(), nb.emoji + " New badge: " + nb.name, Toast.LENGTH_LONG).show();
+                }
+            });
+        });
     }
 
     /** Shows the newest open poll you have not voted on yet. */
@@ -260,6 +323,7 @@ public class HomeFragment extends Fragment {
         renderGoal();
         refreshTips();
         refreshPoll();
+        refreshLevel();
         NextDeadlineWidget.refresh(requireContext());
 
         // Only fetch here if permission is already granted; otherwise the
@@ -632,6 +696,9 @@ public class HomeFragment extends Fragment {
                 {"Resources", R.drawable.ic_tile_resources, R.color.home_notice, ResourcesActivity.class},
                 {"Polls", R.drawable.ic_tile_poll, R.color.home_classes, PollsActivity.class},
                 {"Statistics", R.drawable.ic_tile_stats, R.color.home_stats, StatsActivity.class},
+                {"GPA", R.drawable.ic_tile_gpa, R.color.home_stats, GpaActivity.class},
+                {"Badges", R.drawable.ic_tile_badge, R.color.home_notice, AchievementsActivity.class},
+                {"Scan", R.drawable.ic_tile_scan, R.color.home_classes, ScanActivity.class},
         };
         b.tileGrid.removeAllViews();
         LinearLayout row = null;
