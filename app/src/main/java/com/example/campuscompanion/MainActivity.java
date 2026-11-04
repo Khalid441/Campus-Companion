@@ -92,6 +92,11 @@ public class MainActivity extends AppCompatActivity {
             startActivity(new Intent(this, OnboardingActivity.class));
         }
 
+        // Widgets may still show the previous account: redraw them for this one
+        com.example.campuscompanion.widget.NextDeadlineWidget.refresh(this);
+        com.example.campuscompanion.widget.TodayWidget.refresh(this);
+        com.example.campuscompanion.widget.AttendanceWidget.refresh(this);
+
         NotificationHelper.createChannels(this);
         if (Build.VERSION.SDK_INT >= 33 && !NotificationHelper.canNotify(this)) {
             notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS);

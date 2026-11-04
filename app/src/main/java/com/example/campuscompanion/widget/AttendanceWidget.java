@@ -50,6 +50,7 @@ public class AttendanceWidget extends AppWidgetProvider {
             super.onReceive(context, intent);
             return;
         }
+        if (FirebaseAuth.getInstance().getCurrentUser() == null) return;   // signed out: do nothing
         int courseId = intent.getIntExtra(EXTRA_COURSE, -1);
         PendingResult result = goAsync();
         Context app = context.getApplicationContext();

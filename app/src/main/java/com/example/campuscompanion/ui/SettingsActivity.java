@@ -238,7 +238,9 @@ public class SettingsActivity extends AppCompatActivity {
         SyncManager.stop(this);
         NoticeManager.stop();
         FirebaseAuth.getInstance().signOut();
-        NextDeadlineWidget.refresh(this);   // widget switches to "Sign in..."
+        NextDeadlineWidget.refresh(this);   // widgets switch to "Sign in..."
+        com.example.campuscompanion.widget.TodayWidget.refresh(this);
+        com.example.campuscompanion.widget.AttendanceWidget.refresh(this);
         UserSession.clear(this);
 
         Intent i = new Intent(this, LoginActivity.class);
