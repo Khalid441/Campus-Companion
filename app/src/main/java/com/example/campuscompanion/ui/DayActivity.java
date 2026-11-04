@@ -242,7 +242,22 @@ public class DayActivity extends AppCompatActivity {
         if (e.course == null) {
             if (selected <= DateUtil.startOfDay(System.currentTimeMillis())) {
                 r.tvEvStatus.setVisibility(View.VISIBLE);
-                r.tvEvStatus.setText("Add this course in Attendance to track it");
+                r.tvEvStatus.setText("+ Track attendance for this course");
+                r.tvEvStatus.setClickable(true);
+                r.tvEvStatus.setOnClickListener(v -> {
+                    r.tvEvStatus.setEnabled(false);
+                    String routineName = e.title;
+                    android.content.Context app = getApplicationContext();
+                    AppDatabase.executor.execute(() -> {
+                        AttendanceCourse c = AttendanceActions.ensureCourse(app, routineName);
+                        runOnUiThread(() -> {
+                            if (isFinishing() || isDestroyed()) return;
+                            Snackbar.make(b.getRoot(), c == null ? "Could not add this course"
+                                    : "Now tracking " + c.title() + " (minimum " + c.minPercent
+                                    + "%, change it in Attendance)", Snackbar.LENGTH_LONG).show();
+                        });
+                    });
+                });
             }
             return;
         }

@@ -13,6 +13,40 @@ import com.example.campuscompanion.util.AttendanceMath;
 public final class AttendanceActions {
     private AttendanceActions() { }
 
+    /** Minimum attendance used when a course is added automatically; the student can change it later. */
+    public static final int DEFAULT_MIN_PERCENT = 75;
+
+    /**
+     * Makes sure the routine class has an attendance course, creating one when missing.
+     * Call from a background thread. Returns the course (existing or new).
+     */
+    public static AttendanceCourse ensureCourse(android.content.Context app, String routineCourse) {
+        if (routineCourse == null || routineCourse.trim().length() < 3) return null;
+        AttendanceDao dao = AppDatabase.get(app).attendanceDao();
+        java.util.List<AttendanceCourse> all = dao.getCoursesNow();
+        AttendanceCourse found = com.example.campuscompanion.util.CourseMatcher.find(all, routineCourse);
+        if (found != null) return found;
+
+        String text = routineCourse.trim();
+        AttendanceCourse c = new AttendanceCourse();
+        java.util.regex.Matcher m = java.util.regex.Pattern
+                .compile("\\b([A-Za-z]{2,4})[\\s-]?(\\d{3,4})\\b").matcher(text);
+        if (m.find()) {
+            c.code = m.group(1).toUpperCase(java.util.Locale.ROOT) + " " + m.group(2);
+            String rest = (text.substring(0, m.start()) + " " + text.substring(m.end())).replaceAll("\\s+", " ").trim();
+            c.name = rest.isEmpty() ? c.code : rest;
+        } else {
+            c.code = "";
+            c.name = text;
+        }
+        c.minPercent = DEFAULT_MIN_PERCENT;
+        c.totalPlanned = 0;
+        c.createdAt = System.currentTimeMillis();
+        c.examDate = 0;
+        c.id = (int) dao.insertCourse(c);
+        return c;
+    }
+
     public interface Saved {
         void onSaved(AttendanceRecord record);
     }

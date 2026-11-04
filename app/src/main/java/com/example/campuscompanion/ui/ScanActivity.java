@@ -166,6 +166,7 @@ public class ScanActivity extends AppCompatActivity {
             for (Object o : chosen) {
                 if (o instanceof RoutineEntry) {
                     db.routineDao().insert((RoutineEntry) o);
+                    AttendanceActions.ensureCourse(app, ((RoutineEntry) o).course);
                 } else {
                     Deadline d = (Deadline) o;
                     d.id = (int) db.deadlineDao().insert(d);

@@ -75,6 +75,7 @@ public class AddRoutineActivity extends AppCompatActivity {
         Context app = getApplicationContext();
         AppDatabase.executor.execute(() -> {
             AppDatabase.get(app).routineDao().insert(e);
+            AttendanceActions.ensureCourse(app, e.course);   // track attendance automatically
             runOnUiThread(this::finish);
         });
     }
