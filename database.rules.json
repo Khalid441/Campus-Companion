@@ -1,0 +1,30 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "presence": {
+      "$group": {
+        ".read": "auth != null",
+        "$uid": {
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "newData.isBoolean()"
+        }
+      }
+    },
+
+    "status": {
+      "$group": {
+        ".read": "auth != null",
+        ".write": "auth != null",
+        ".validate": "newData.hasChildren(['type', 'message', 'by', 'byName', 'at']) && newData.child('by').val() === auth.uid && newData.child('type').isString() && newData.child('type').val().matches(/^(CANCELLED|ROOM|LATE|NOTE|CLEAR)$/) && newData.child('message').isString() && newData.child('message').val().length <= 140 && newData.child('byName').isString() && newData.child('byName').val().length <= 60 && newData.child('at').val() === now",
+        "type":    { ".validate": true },
+        "message": { ".validate": true },
+        "by":      { ".validate": true },
+        "byName":  { ".validate": true },
+        "at":      { ".validate": true },
+        "$other":  { ".validate": false }
+      }
+    }
+  }
+}

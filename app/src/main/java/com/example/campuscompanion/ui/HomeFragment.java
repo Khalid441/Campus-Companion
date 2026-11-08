@@ -314,6 +314,93 @@ public class HomeFragment extends Fragment {
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+        startLive();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        stopLive();
+    }
+
+    // ---- Realtime Database: presence + live class status ----
+    private Runnable stopPresence, stopStatus;
+
+    private void startLive() {
+        Context ctx = getContext();
+        if (ctx == null || b == null) return;
+        stopLive();
+        if (!com.example.campuscompanion.util.LiveClass.available(ctx)) {
+            b.cardLive.setVisibility(View.GONE);
+            return;
+        }
+        b.cardLive.setVisibility(View.VISIBLE);
+        boolean cr = UserSession.isCr(ctx);
+        b.liveActions.setVisibility(cr ? View.VISIBLE : View.GONE);
+        b.btnLivePost.setOnClickListener(v -> postLiveDialog());
+        b.btnLiveClear.setOnClickListener(v -> com.example.campuscompanion.util.LiveClass.post(
+                requireContext(), com.example.campuscompanion.util.LiveClass.CLEAR, "", () -> { }, () ->
+                        Toast.makeText(requireContext(), "Could not clear. Check your connection.", Toast.LENGTH_SHORT).show()));
+
+        stopPresence = com.example.campuscompanion.util.LiveClass.watchPresence(ctx, n -> {
+            if (!isAdded() || getView() == null) return;
+            b.tvOnline.setText("\uD83D\uDFE2 Live class  \u2022  " + n + (n == 1 ? " classmate online" : " classmates online"));
+        });
+        stopStatus = com.example.campuscompanion.util.LiveClass.watchStatus(ctx, st -> {
+            if (!isAdded() || getView() == null) return;
+            if (st == null || !st.active()) {
+                b.tvLiveStatus.setVisibility(View.GONE);
+                b.tvLiveMeta.setVisibility(View.GONE);
+                b.tvLiveNone.setVisibility(View.VISIBLE);
+                return;
+            }
+            b.tvLiveNone.setVisibility(View.GONE);
+            b.tvLiveStatus.setVisibility(View.VISIBLE);
+            b.tvLiveStatus.setText(com.example.campuscompanion.util.LiveClass.icon(st.type) + " "
+                    + com.example.campuscompanion.util.LiveClass.label(st.type)
+                    + (st.message.isEmpty() ? "" : ": " + st.message));
+            b.tvLiveMeta.setVisibility(View.VISIBLE);
+            b.tvLiveMeta.setText((st.byName.isEmpty() ? "CR" : st.byName) + "  \u2022  "
+                    + com.example.campuscompanion.util.LiveClass.ago(st.at));
+        });
+    }
+
+    private void stopLive() {
+        if (stopPresence != null) { stopPresence.run(); stopPresence = null; }
+        if (stopStatus != null) { stopStatus.run(); stopStatus = null; }
+    }
+
+    private void postLiveDialog() {
+        Context ctx = requireContext();
+        final String[] types = {com.example.campuscompanion.util.LiveClass.CANCELLED,
+                com.example.campuscompanion.util.LiveClass.ROOM,
+                com.example.campuscompanion.util.LiveClass.LATE,
+                com.example.campuscompanion.util.LiveClass.NOTE};
+        final String[] names = {"\u274C Class cancelled", "\uD83D\uDEAA Room changed", "\u23F0 Running late", "\uD83D\uDCE2 Announcement"};
+        final int[] chosen = {0};
+        final android.widget.EditText input = new android.widget.EditText(ctx);
+        input.setHint("Details, e.g. CSE 2209 now in Room B-105");
+        input.setSingleLine(true);
+        android.widget.LinearLayout box = new android.widget.LinearLayout(ctx);
+        int pad = (int) (20 * getResources().getDisplayMetrics().density);
+        box.setPadding(pad, 0, pad, 0);
+        box.addView(input, new android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT));
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(ctx)
+                .setTitle("Post a live update")
+                .setSingleChoiceItems(names, 0, (d, which) -> chosen[0] = which)
+                .setView(box)
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Post to class", (d, wch) -> com.example.campuscompanion.util.LiveClass.post(
+                        ctx, types[chosen[0]], input.getText().toString().trim(),
+                        () -> { },
+                        () -> Toast.makeText(ctx, "Could not post. Check your connection.", Toast.LENGTH_SHORT).show()))
+                .show();
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
         if (b == null) return;
