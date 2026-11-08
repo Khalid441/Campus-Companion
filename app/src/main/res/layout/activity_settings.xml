@@ -257,5 +257,33 @@
             android:textColor="?attr/colorError"
             app:cornerRadius="20dp"
             app:strokeColor="?attr/colorError" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Danger zone"
+            android:textColor="?attr/colorError"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="Permanently delete your account, cloud backup and all data on this phone."
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textSize="13sp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDeleteAccount"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="24dp"
+            android:text="Delete my account"
+            android:textColor="?attr/colorError"
+            app:cornerRadius="20dp"
+            app:strokeColor="?attr/colorError" />
     </LinearLayout>
 </ScrollView>

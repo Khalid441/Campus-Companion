@@ -79,6 +79,7 @@ public class SettingsActivity extends AppCompatActivity {
             }
         });
         b.btnLogout.setOnClickListener(v -> logout());
+        b.btnDeleteAccount.setOnClickListener(v -> AccountDeleter.start(this));
         b.btnAbout.setOnClickListener(v -> startActivity(new Intent(this, AboutActivity.class)));
         b.btnGoal.setOnClickListener(v -> chooseGoal());
         b.btnCalendar.setOnClickListener(v -> CalendarExport.show(this));

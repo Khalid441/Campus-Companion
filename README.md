@@ -90,6 +90,7 @@ This project was built for the Android part of the course plan (Weeks 8–13). T
 | 🎙️ **Voice input** | Say *"Assignment 3 due Friday 5 pm"* and a prefilled deadline opens. |
 | 📷 **Scan to add** | On-device OCR reads a routine or notice and proposes entries you confirm. |
 | 🗓️ **Dynamic exam planner** | Plan sized to your daily study time, revision progress and workload per exam, tick topics off, add topics, start focus. |
+| 🗑️ **Delete account** | Settings → Danger zone: removes login, profile, backup, leaderboard entry and all local data. |
 | 📅 **Calendar export** | Deadlines, exams and the weekly routine as a standard `.ics` file. |
 | 🧩 **Three widgets** | *Next deadline*, *Today*, and *Attendance* (your lowest course with a one-tap **Present today**). |
 | 👋 **Onboarding and demo data** | A three-page intro on first launch and a **Load sample data** button (removable in Settings; demo items are tagged "[Demo]"). |

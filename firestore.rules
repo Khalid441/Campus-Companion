@@ -48,6 +48,9 @@ service cloud.firestore {
             && request.resource.data.joinCode == sectionDoc(request.resource.data.groupId).joinCode )
         );
 
+      // delete-my-account: the app removes the backup and leaderboard entry first, then this
+      allow delete: if request.auth != null && request.auth.uid == uid;
+
       // students can change their name, never role / university / section / class
       allow update: if request.auth != null && request.auth.uid == uid
         && request.resource.data.role == resource.data.role

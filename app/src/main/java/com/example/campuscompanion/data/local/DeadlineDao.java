@@ -29,6 +29,9 @@ public interface DeadlineDao {
     @Query("SELECT * FROM deadlines WHERE id = :id")
     Deadline getById(int id);
 
+    @Query("DELETE FROM deadlines")
+    void deleteAll();
+
     @Query("SELECT * FROM deadlines WHERE done = 0")
     List<Deadline> getPending();
 
