@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="?android:attr/colorBackground"
@@ -25,11 +26,38 @@
         android:visibility="gone"
         android:accessibilityLiveRegion="polite" />
 
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottomNav"
+    <!-- Floating pill bottom bar: rounded translucent card with icon-only tabs -->
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:labelVisibilityMode="labeled"
-        app:menu="@menu/bottom_nav"
-        xmlns:app="http://schemas.android.com/apk/res-auto" />
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="6dp"
+        android:paddingBottom="12dp">
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardBackgroundColor="@color/nav_bar_bg"
+            app:cardCornerRadius="36dp"
+            app:cardElevation="10dp"
+            app:strokeColor="@color/nav_bar_stroke"
+            app:strokeWidth="1dp">
+
+            <com.google.android.material.bottomnavigation.BottomNavigationView
+                android:id="@+id/bottomNav"
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:background="@android:color/transparent"
+                app:backgroundTint="@android:color/transparent"
+                app:elevation="0dp"
+                app:itemActiveIndicatorStyle="@style/Widget.CampusCompanion.NavIndicator"
+                app:itemIconSize="26dp"
+                app:itemPaddingBottom="12dp"
+                app:itemPaddingTop="12dp"
+                app:labelVisibilityMode="unlabeled"
+                app:menu="@menu/bottom_nav" />
+        </com.google.android.material.card.MaterialCardView>
+    </FrameLayout>
 </LinearLayout>
