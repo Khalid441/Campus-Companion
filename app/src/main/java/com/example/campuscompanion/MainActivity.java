@@ -51,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String STATE_TAB = "currentTab";
 
     private ActivityHostBinding b;
+    private int navInsetBottom = 0, topInset = 0, lastOverlayHeight = -1;
     private int currentTab = R.id.nav_home;
 
     public static final String ACTION_ADD_DEADLINE = "com.example.campuscompanion.action.ADD_DEADLINE";
@@ -86,6 +87,7 @@ public class MainActivity extends AppCompatActivity {
 
         b = ActivityHostBinding.inflate(getLayoutInflater());
         setContentView(b.getRoot());
+        setUpEdgeToEdge();
 
         // First time on this account: short intro
         if (savedInstanceState == null && !OnboardingActivity.isDone(this)) {
@@ -132,6 +134,7 @@ public class MainActivity extends AppCompatActivity {
         });
         b.bottomNav.setSelectedItemId(currentTab);
         showTab(currentTab, false);
+        b.getRoot().post(this::applyBottomClearance);
 
         handleAction(getIntent());
 
@@ -276,5 +279,67 @@ public class MainActivity extends AppCompatActivity {
         }
         tx.commitNow();   // now, so a second call finds this fragment instead of adding a twin
         currentTab = navId;
+    }
+
+    /**
+     * Content runs under the status bar and the system navigation bar, and the floating bottom bar
+     * overlays it. Scrolling screens get bottom padding so the last item can always be reached.
+     */
+    private void setUpEdgeToEdge() {
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        getWindow().setNavigationBarColor(android.graphics.Color.TRANSPARENT);
+        if (Build.VERSION.SDK_INT >= 29) getWindow().setNavigationBarContrastEnforced(false);
+
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(b.getRoot(), (v, insets) -> {
+            androidx.core.graphics.Insets sb = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars());
+            topInset = sb.top;
+            navInsetBottom = sb.bottom;
+            b.tabContainer.setPadding(0, sb.top, 0, 0);
+            b.navOverlay.setPadding(0, 0, 0, sb.bottom);
+            return insets;
+        });
+        b.navOverlay.addOnLayoutChangeListener((v, l, t, r, bt, ol, ot, or, ob) -> {
+            int h = bt - t;
+            if (h != lastOverlayHeight) {
+                lastOverlayHeight = h;
+                applyBottomClearance();
+            }
+        });
+    }
+
+    private void applyBottomClearance() {
+        int extra = lastOverlayHeight < 0 ? 0 : lastOverlayHeight;
+        for (androidx.fragment.app.Fragment f : getSupportFragmentManager().getFragments()) {
+            if (f.getView() != null) padScrollers(f.getView(), extra);
+        }
+    }
+
+    private void padScrollers(android.view.View v, int extra) {
+        if (v instanceof android.widget.ScrollView || v instanceof androidx.core.widget.NestedScrollView
+                || v instanceof androidx.recyclerview.widget.RecyclerView) {
+            Object base = v.getTag(R.id.tag_base_pad);
+            int basePad = base instanceof Integer ? (Integer) base : v.getPaddingBottom();
+            v.setTag(R.id.tag_base_pad, basePad);
+            ((android.view.ViewGroup) v).setClipToPadding(false);
+            v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), basePad + extra);
+            return;
+        }
+        if (v instanceof com.google.android.material.floatingactionbutton.FloatingActionButton
+                || v instanceof com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton) {
+            android.view.ViewGroup.LayoutParams lp = v.getLayoutParams();
+            if (lp instanceof android.view.ViewGroup.MarginLayoutParams) {
+                android.view.ViewGroup.MarginLayoutParams m = (android.view.ViewGroup.MarginLayoutParams) lp;
+                Object base = v.getTag(R.id.tag_base_pad);
+                int baseMargin = base instanceof Integer ? (Integer) base : m.bottomMargin;
+                v.setTag(R.id.tag_base_pad, baseMargin);
+                m.bottomMargin = baseMargin + extra;
+                v.setLayoutParams(m);
+            }
+            return;
+        }
+        if (v instanceof android.view.ViewGroup) {
+            android.view.ViewGroup g = (android.view.ViewGroup) v;
+            for (int i = 0; i < g.getChildCount(); i++) padScrollers(g.getChildAt(i), extra);
+        }
     }
 }

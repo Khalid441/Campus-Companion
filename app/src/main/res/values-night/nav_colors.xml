@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Floating pill bottom bar (dark) -->
-    <color name="nav_bar_bg">#EB2A2B2F</color>
+    <color name="nav_bar_bg">#FA2A2B2F</color>
     <color name="nav_bar_stroke">#33FFFFFF</color>
     <color name="nav_indicator">#40FFFFFF</color>
 </resources>

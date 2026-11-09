@@ -1,16 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?android:attr/colorBackground"
-    android:orientation="vertical">
+    android:background="?android:attr/colorBackground">
 
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/tabContainer"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_height="match_parent" />
+
+    <!-- Bottom overlay: offline banner + floating bar. Content scrolls behind it. -->
+    <LinearLayout
+        android:id="@+id/navOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:orientation="vertical">
 
     <TextView
         android:id="@+id/tvOffline"
@@ -26,7 +34,7 @@
         android:visibility="gone"
         android:accessibilityLiveRegion="polite" />
 
-    <!-- Floating pill bottom bar: rounded translucent card with icon-only tabs -->
+    <!-- Floating pill bottom bar: rounded translucent card with icon + small label tabs -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -45,19 +53,11 @@
             app:strokeColor="@color/nav_bar_stroke"
             app:strokeWidth="1dp">
 
-            <com.google.android.material.bottomnavigation.BottomNavigationView
+            <com.example.campuscompanion.view.FloatingNavBar
                 android:id="@+id/bottomNav"
                 android:layout_width="match_parent"
-                android:layout_height="64dp"
-                android:background="@android:color/transparent"
-                app:backgroundTint="@android:color/transparent"
-                app:elevation="0dp"
-                app:itemActiveIndicatorStyle="@style/Widget.CampusCompanion.NavIndicator"
-                app:itemIconSize="26dp"
-                app:itemPaddingBottom="12dp"
-                app:itemPaddingTop="12dp"
-                app:labelVisibilityMode="unlabeled"
-                app:menu="@menu/bottom_nav" />
+                android:layout_height="wrap_content" />
         </com.google.android.material.card.MaterialCardView>
     </FrameLayout>
-</LinearLayout>
+    </LinearLayout>
+</FrameLayout>
