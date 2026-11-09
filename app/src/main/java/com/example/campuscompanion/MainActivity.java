@@ -279,6 +279,7 @@ public class MainActivity extends AppCompatActivity {
         }
         tx.commitNow();   // now, so a second call finds this fragment instead of adding a twin
         currentTab = navId;
+        applyBottomClearance();
     }
 
     /**
@@ -298,6 +299,17 @@ public class MainActivity extends AppCompatActivity {
             b.navOverlay.setPadding(0, 0, 0, sb.bottom);
             return insets;
         });
+        // Tabs are created lazily, after the overlay has already been measured, so pad each
+        // fragment's view (+ buttons, lists) as soon as it is created.
+        getSupportFragmentManager().registerFragmentLifecycleCallbacks(
+                new FragmentManager.FragmentLifecycleCallbacks() {
+                    @Override
+                    public void onFragmentViewCreated(FragmentManager fm, Fragment f,
+                                                      android.view.View v, Bundle savedInstanceState) {
+                        padScrollers(v, Math.max(lastOverlayHeight, 0));
+                        v.post(() -> padScrollers(v, Math.max(lastOverlayHeight, 0)));
+                    }
+                }, false);
         b.navOverlay.addOnLayoutChangeListener((v, l, t, r, bt, ol, ot, or, ob) -> {
             int h = bt - t;
             if (h != lastOverlayHeight) {
